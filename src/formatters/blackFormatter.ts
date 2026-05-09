@@ -16,10 +16,11 @@ export class BlackFormatter implements IFormatter {
     return isToolAvailable(this.executablePath);
   }
 
-  async format(code: string, _options: FormatOptions): Promise<FormatResult> {
+  async format(code: string, options: FormatOptions): Promise<FormatResult> {
+    const exe = options.executablePath ?? this.executablePath;
     try {
       // `-` tells Black to read from stdin; `--quiet` suppresses "reformatted" messages
-      const result = await runCli(this.executablePath, ['-', '--quiet'], code);
+      const result = await runCli(exe, ['-', '--quiet'], code);
       if (result.exitCode === 0) {
         const trimmed = result.stdout.endsWith('\n') ? result.stdout.slice(0, -1) : result.stdout;
         return { success: true, formatted: trimmed };

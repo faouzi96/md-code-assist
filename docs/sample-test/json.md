@@ -24,7 +24,11 @@ Press `Shift+Alt+F` to format all blocks with Prettier (bundled — no install r
   "server": {
     "host": "localhost",
     "port": 8080,
-    "tls": { "enabled": true, "cert": "/etc/ssl/cert.pem", "key": "/etc/ssl/key.pem" }
+    "tls": {
+      "enabled": true,
+      "cert": "/etc/ssl/cert.pem",
+      "key": "/etc/ssl/key.pem"
+    }
   },
   "database": {
     "url": "postgresql://user:pass@localhost:5432/mydb",
@@ -96,7 +100,11 @@ Press `Shift+Alt+F` to format all blocks with Prettier (bundled — no install r
 ```json
 {
   "level1": {
-    "level2": { "level3": { "level4": { "value": "deep", "array": [1, 2, 3], "flag": true } } }
+    "level2": {
+      "level3": {
+        "level4": { "value": "deep", "array": [1, 2, 3], "flag": true }
+      }
+    }
   }
 }
 ```

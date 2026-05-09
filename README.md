@@ -8,23 +8,24 @@ MD Code Assist treats the code examples inside your `.md` files as first-class c
 
 ## Features
 
-- **Format code blocks** — sends each fenced block through Prettier, Black, or shfmt and writes the result back, leaving all surrounding Markdown untouched.
+- **Format code blocks** — sends each fenced block through Prettier, prettier-plugin-sh, or Black and writes the result back, leaving all surrounding Markdown untouched.
 - **Inline diagnostics** — runs syntax and lint checks on code blocks and maps errors back to their exact lines in the Markdown file (Problems panel + gutter icons + inline text).
 - **Format on Save** — optional auto-format whenever you save a Markdown file.
 - **Format Document** — `Shift+Alt+F` formats all code blocks via VS Code's built-in shortcut.
-- **Graceful degradation** — if Black or shfmt are not installed, the extension shows a clear message and skips those blocks without affecting others.
+- **Graceful degradation** — if a required tool is not available, the extension shows a clear message and skips those blocks without affecting others.
 
 ---
 
 ## Requirements
 
-| Tool | Notes |
-|------|-------|
+| Requirement | Notes |
+|-------------|-------|
 | VS Code ≥ 1.85 | |
-| Python + [Black](https://black.readthedocs.io/) | Only for Python block formatting — `pip install black` |
-| [shfmt](https://github.com/mvdan/sh) | Only for Shell/Bash formatting — `brew install shfmt` |
+| Python runtime | Only for Python block **diagnostics** (`python -m py_compile`) |
+| Python + Black | Only for Python block **formatting** — installed automatically via the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension, or manually with `pip install black` |
+| [shellcheck](https://www.shellcheck.net/) | Optional — enhances Shell/Bash diagnostics (basic syntax errors work without it) |
 
-**Prettier is bundled — no installation required.**
+**Prettier, prettier-plugin-sh, js-yaml, postcss, and parse5 are all bundled — no installation required.**
 
 ---
 
@@ -85,10 +86,10 @@ All settings are under `mdCodeAssist.*` and can be set at User, Workspace, or Fo
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `format.enabledLanguages` | `["javascript","typescript","python","json","yaml","shell"]` | Languages to format |
-| `diagnostics.enabledLanguages` | `["javascript","typescript"]` | Languages to diagnose |
-| `formatters.blackPath` | `"black"` | Path to Black executable |
-| `formatters.shfmtPath` | `"shfmt"` | Path to shfmt executable |
+| `format.enabledLanguages` | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown"]` | Languages to format |
+| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell"]` | Languages to diagnose |
+| `formatters.blackPath` | `"black"` | Path to Black CLI executable (fallback) |
+| `formatters.shfmtPath` | `"shfmt"` | Path to shfmt CLI executable (fallback) |
 | `decorations.showGutterIcons` | `true` | Colored gutter icons for diagnostics |
 | `decorations.showInlineErrors` | `true` | Inline error text after affected lines |
 | `formatOnSave` | `false` | Auto-format all blocks on save |
@@ -98,7 +99,10 @@ Example — enable all languages and format on save:
 ```jsonc
 {
   "mdCodeAssist.format.enabledLanguages": [
-    "javascript", "typescript", "python", "json", "yaml", "shell", "html", "css", "graphql"
+    "javascript", "typescript", "python", "json", "yaml", "html", "css", "shell", "graphql"
+  ],
+  "mdCodeAssist.diagnostics.enabledLanguages": [
+    "javascript", "typescript", "json", "yaml", "css", "html", "shell", "python"
   ],
   "mdCodeAssist.formatOnSave": true
 }

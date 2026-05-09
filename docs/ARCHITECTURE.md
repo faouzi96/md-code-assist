@@ -23,10 +23,11 @@ Markdown file
 └──────┬──────┬───────┘
        │      │
        ▼      ▼
-  Prettier   Black / shfmt
-  (Node API) (CLI via stdin)
-       │      │
-       └──────┘
+  Prettier          Black CLI    shfmt CLI   BlackExtension
+  (Node API +       (stdin)      (stdin)     (VS Code extension
+   plugin-sh WASM)                            delegate via API)
+       │                │            │              │
+       └────────────────┴────────────┴──────────────┘
            │ formatted code string
            ▼
 ┌─────────────────────┐
@@ -49,8 +50,11 @@ Markdown file (on change, debounced 500 ms)
 ┌──────────────────────────────┐
 │  CLI Diagnostics             │  node --check (JS/TS)
 │                              │  python -m py_compile (Python)
-│                              │  shellcheck --format=json (Shell)
+│                              │  shellcheck --format=json (Shell, with fallback)
 │                              │  JSON.parse (JSON)
+│                              │  js-yaml (YAML, bundled)
+│                              │  PostCSS (CSS, bundled)
+│                              │  parse5 (HTML, bundled)
 └──────────────┬───────────────┘
                │ block-relative Diagnostic[]
                ▼
@@ -80,9 +84,10 @@ src/
 ├── formatters/
 │   ├── types.ts              # IFormatter, FormatOptions, FormatResult
 │   ├── formatterRegistry.ts  # Language-to-formatter map + LANGUAGE_ALIASES
-│   ├── prettierFormatter.ts  # Prettier Node API (JS/TS/JSON/YAML/HTML/CSS/…)
-│   ├── blackFormatter.ts     # Black CLI via stdin
-│   ├── shfmtFormatter.ts     # shfmt CLI via stdin
+│   ├── prettierFormatter.ts        # Prettier Node API + prettier-plugin-sh (shell)
+│   ├── blackFormatter.ts          # Black CLI via stdin
+│   ├── shfmtFormatter.ts          # shfmt CLI via stdin (optional)
+│   ├── blackExtensionFormatter.ts # Python via ms-python.black-formatter extension
 │   ├── formatterDispatcher.ts# Routes a CodeBlock to the right formatter
 │   └── index.ts
 │
@@ -126,3 +131,6 @@ src/
 | Debounced diagnostic refresh (500 ms)                                  | Avoids re-running checks on every keypress                                                                                        |
 | CLI-based diagnostics (not virtual documents + LSP)                    | Virtual documents on a custom URI scheme cannot receive language-server diagnostics; VS Code only provides them for real files    |
 | `FormatSummary` returned from `formatDocument`                         | Allows the command to show specific feedback (already formatted / skipped / formatted N) instead of a generic "nothing to format" |
+| `prettier-plugin-sh` (WASM) instead of `mvdan-sh`                     | `mvdan-sh` is deprecated; `prettier-plugin-sh` is the maintained replacement and integrates directly with the Prettier pipeline   |
+| `BlackExtensionFormatter` delegates to `ms-python.black-formatter`     | Avoids bundling a Python runtime; the extension is auto-installed and provides a proper VS Code `TextEdit[]` response             |
+| In-process YAML/CSS/HTML diagnostics via js-yaml/PostCSS/parse5       | These parsers throw structured errors with line/column; no external CLI needed for baseline syntax checking                       |

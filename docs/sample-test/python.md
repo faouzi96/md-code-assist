@@ -10,9 +10,7 @@ Check **View → Output → MD Code Assist** if blocks are skipped.
 ```python
 def   greet(name,greeting='Hello'):
     return   greeting+', '+name+'!'
-
-
-x=greet('Alice')
+x=greet('Alice');
 y=greet('Bob',greeting='Hi')
 print(x,y)
 ```
@@ -92,7 +90,14 @@ async def main():
   return results
 ```
 
-## Formatting — dataclasses
+## Syntax errors — for diagnostics testing
+
+```python
+def broken(x, y):
+    if x == y:
+        print("equal")
+    return x + y
+```
 
 ```python
 from dataclasses import dataclass,field

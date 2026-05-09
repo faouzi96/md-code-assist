@@ -10,9 +10,10 @@ Check **View → Output → MD Code Assist** if blocks are skipped.
 ```sh
 #!/bin/sh
 NAME=$1
-if [ -z "$NAME" ];then
-echo "Usage: $0 <name>"
-exit 1
+if [ -z "$NAME" ]; then
+  echo "Usage: $0 <name>"
+  exit 1
+
 fi
 echo "Hello, $NAME!"
 ```
@@ -23,24 +24,24 @@ echo "Hello, $NAME!"
 #!/usr/bin/env bash
 set -euo pipefail
 
-log(){
-local level=$1
-shift
-echo "[$level] $(date -u +%Y-%m-%dT%H:%M:%SZ) $*" >&2
+log() {
+  local level=$1
+  shift
+  echo "[$level] $(date -u +%Y-%m-%dT%H:%M:%SZ) $*" >&2
 }
 
-retry(){
-local attempts=$1
-local delay=$2
-shift 2
-local i
-for i in $(seq 1 "$attempts");do
-"$@" && return 0
-log WARN "Attempt $i/$attempts failed, retrying in ${delay}s..."
-sleep "$delay"
-done
-log ERROR "All $attempts attempts failed"
-return 1
+retry() {
+  local attempts=$1
+  local delay=$2
+  shift 2
+  local i
+  for i in $(seq 1 "$attempts"); do
+    "$@" && return 0
+    log WARN "Attempt $i/$attempts failed, retrying in ${delay}s..."
+    sleep "$delay"
+  done
+  log ERROR "All $attempts attempts failed"
+  return 1
 }
 ```
 
@@ -51,19 +52,19 @@ return 1
 
 DIRS=(/tmp /var/log /home)
 
-for dir in "${DIRS[@]}";do
-if [ -d "$dir" ];then
-echo "$dir exists"
-elif [ -f "$dir" ];then
-echo "$dir is a file, not a directory"
-else
-echo "$dir does not exist"
-fi
+for dir in "${DIRS[@]}"; do
+  if [ -d "$dir" ]; then
+    echo "$dir exists"
+  elif [ -f "$dir" ]; then
+    echo "$dir is a file, not a directory"
+  else
+    echo "$dir does not exist"
+  fi
 done
 
 # C-style loop
-for ((i=0;i<10;i++));do
-echo "Index: $i"
+for ((i = 0; i < 10; i++)); do
+  echo "Index: $i"
 done
 ```
 
@@ -72,10 +73,10 @@ done
 ```bash
 #!/usr/bin/env bash
 
-generate_config(){
-local host=$1
-local port=$2
-cat <<EOF
+generate_config() {
+  local host=$1
+  local port=$2
+  cat << EOF
 server {
     listen ${port};
     server_name ${host};
@@ -87,8 +88,8 @@ server {
 EOF
 }
 
-VERSION=$(git describe --tags --always 2>/dev/null || echo "unknown")
-COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+VERSION=$(git describe --tags --always 2> /dev/null || echo "unknown")
+COMMIT=$(git rev-parse --short HEAD 2> /dev/null || echo "unknown")
 echo "Version: $VERSION ($COMMIT)"
 ```
 
@@ -117,26 +118,26 @@ done
 ```bash
 #!/usr/bin/env bash
 
-parse_args(){
-while [[ $# -gt 0 ]];do
-case $1 in
--h|--help)
-echo "Usage: script.sh [options]"
-exit 0
-;;
--v|--verbose)
-VERBOSE=true
-shift
-;;
--o|--output)
-OUTPUT="$2"
-shift 2
-;;
-*)
-echo "Unknown option: $1"
-exit 1
-;;
-esac
-done
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h | --help)
+        echo "Usage: script.sh [options]"
+        exit 0
+        ;;
+      -v | --verbose)
+        VERBOSE=true
+        shift
+        ;;
+      -o | --output)
+        OUTPUT="$2"
+        shift 2
+        ;;
+      *)
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+  done
 }
 ```

@@ -8,6 +8,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Added
+
+#### Formatting
+
+- **Shell/Bash/Zsh formatting** (bundled, no install required) via [`prettier-plugin-sh`](https://github.com/un-ts/prettier/tree/master/packages/sh), replacing the deprecated `mvdan-sh` package. Shell blocks (`sh`, `bash`, `zsh`, `shell`) are now formatted by the Prettier pipeline with zero external dependencies.
+- **Python formatting via extension delegate** — introduced `BlackExtensionFormatter` which delegates to the [`ms-python.black-formatter`](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) VS Code extension via `vscode.executeFormatDocumentProvider`. The extension is automatically prompted for installation on first activation if not already present.
+- **`ensureBlackExtension()`** utility that silently installs `ms-python.black-formatter` in the background on extension activation.
+
+#### Diagnostics
+
+- **YAML diagnostics** (bundled) — syntax errors reported with line/column via `js-yaml`'s `YAMLException`.
+- **CSS diagnostics** (bundled) — syntax errors reported with line/column via `postcss` `CssSyntaxError`.
+- **HTML diagnostics** (bundled) — structural parse errors reported via `parse5`'s `onParseError` callback.
+- **Shell fallback diagnostics** (bundled) — when `shellcheck` is not installed, `prettier-plugin-sh`'s parse errors are used to surface basic shell syntax issues without any external tool.
+- Expanded default `mdCodeAssist.diagnostics.enabledLanguages` to include `python`, `json`, `yaml`, `css`, `html`, and `shell` in addition to `javascript` and `typescript` — all supported languages are now enabled out of the box.
+- Expanded default `mdCodeAssist.format.enabledLanguages` to include `html`, `css`, `graphql`, and `markdown` — all supported languages are now enabled out of the box.
+
+### Fixed
+
+- `BlackFormatter` and `ShfmtFormatter` now correctly honour the `executablePath` field from `FormatOptions`, allowing per-call path overrides in addition to the workspace setting.
+
+### Removed
+
+- `mvdan-sh` dependency — removed in favour of `prettier-plugin-sh`.
+
 ---
 
 ## [0.1.0] — 2026-05-09

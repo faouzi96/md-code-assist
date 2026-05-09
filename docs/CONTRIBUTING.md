@@ -36,12 +36,24 @@ npm run package      # Package as .vsix
 
 ## Adding a new formatter
 
-1. Implement `IFormatter` from `src/formatters/types.ts`.
-2. Register it in `activate()` in `src/extension.ts` via `formatterRegistry.register(new MyFormatter())`.
-3. Add language aliases to the `LANGUAGE_ALIASES` map in **both** `src/formatters/formatterRegistry.ts` and `src/parser/codeBlockExtractor.ts` (the duplication avoids a circular dependency between the two layers).
-4. If it uses a CLI tool, call `isToolAvailable()` from `src/utils/toolDetector.ts` inside `isAvailable()`.
-5. Add the language to the `mdCodeAssist.format.enabledLanguages` default in `package.json`.
-6. Write unit tests in `test/unit/formatters/`.
+There are two patterns to choose from:
+
+**Pattern A — Bundled formatter** (preferred for OOtB support)
+- Use Prettier or a Prettier plugin (like `prettier-plugin-sh` for Shell).
+- Add the language → parser mapping in `PrettierFormatter.PARSER_MAP` inside `src/formatters/prettierFormatter.ts`.
+- If the plugin needs lazy loading (e.g. WASM), add a `getPlugin*()` helper and import it only when that parser is requested.
+
+**Pattern B — CLI / extension delegate**
+- Implement `IFormatter` from `src/formatters/types.ts`.
+- For CLI tools: use `spawn()` via `src/utils/cliRunner.ts` with `shell: false`; read the path from `options.executablePath ?? this.executablePath`.
+- For VS Code extension delegation (see `BlackExtensionFormatter`): open an untitled doc, call `vscode.commands.executeCommand('vscode.executeFormatDocumentProvider', ...)`, apply the resulting `TextEdit[]`.
+
+**Common steps for both patterns:**
+1. Register the formatter in `activate()` in `src/extension.ts` via `formatterRegistry.register(new MyFormatter())`. Registration order matters — later registrations win for overlapping languages.
+2. Add language aliases to the `LANGUAGE_ALIASES` map in **both** `src/formatters/formatterRegistry.ts` and `src/parser/codeBlockExtractor.ts` (the duplication avoids a circular dependency between the two layers).
+3. If it uses a CLI tool, call `isToolAvailable()` from `src/utils/toolDetector.ts` inside `isAvailable()`.
+4. Add the language to the `mdCodeAssist.format.enabledLanguages` default in `package.json`.
+5. Write unit tests in `test/unit/formatters/`.
 
 ## Adding a new diagnostic checker
 

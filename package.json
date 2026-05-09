@@ -69,7 +69,11 @@
             "python",
             "json",
             "yaml",
-            "shell"
+            "html",
+            "css",
+            "shell",
+            "graphql",
+            "markdown"
           ],
           "description": "Languages for which code block formatting is enabled."
         },
@@ -80,7 +84,13 @@
           },
           "default": [
             "javascript",
-            "typescript"
+            "typescript",
+            "python",
+            "json",
+            "yaml",
+            "css",
+            "html",
+            "shell"
           ],
           "description": "Languages for which inline diagnostics are enabled."
         },
@@ -138,7 +148,11 @@
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
+    "js-yaml": "^4.1.1",
+    "parse5": "^8.0.1",
+    "postcss": "^8.5.14",
     "prettier": "^3.2.5",
+    "prettier-plugin-sh": "^0.18.1",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
     "unified": "^11.0.5",
@@ -148,6 +162,7 @@
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@types/jest": "^29.5.12",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^7.13.0",

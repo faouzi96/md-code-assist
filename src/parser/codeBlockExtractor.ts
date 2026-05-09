@@ -50,6 +50,7 @@ export function extractCodeBlocks(markdownText: string): CodeBlock[] {
 
     blocks.push({
       language,
+      rawLanguage: rawLang.toLowerCase().trim(),
       content: node.value,
       startLine,
       endLine,

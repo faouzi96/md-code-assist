@@ -2,6 +2,8 @@
 export interface CodeBlock {
   /** Canonical language identifier (e.g. "typescript", "python", "shell"). Empty string if unspecified. */
   readonly language: string;
+  /** Raw fence label as written in the Markdown (e.g. "bash", "zsh", "sh"). Empty string if unspecified. */
+  readonly rawLanguage: string;
   /** Raw content between the fences, without leading/trailing newlines added by the parser. */
   readonly content: string;
   /** 0-based line number of the opening fence (``` line) in the Markdown document. */

@@ -8,5 +8,5 @@ import type { Root } from 'mdast';
  */
 export function parseMarkdown(text: string): Root {
   const processor = unified().use(remarkParse);
-  return processor.parse(text) as Root;
+  return processor.parse(text);
 }

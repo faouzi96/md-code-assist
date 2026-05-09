@@ -1,0 +1,164 @@
+{
+  "name": "md-code-assist",
+  "displayName": "MD Code Assist",
+  "description": "Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.",
+  "version": "0.1.0",
+  "publisher": "md-code-assist",
+  "private": true,
+  "license": "MIT",
+  "categories": [
+    "Formatters",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "formatter",
+    "diagnostics",
+    "code blocks",
+    "prettier",
+    "black",
+    "shfmt"
+  ],
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/md-code-assist/md-code-assist"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "mdCodeAssist.formatAllBlocks",
+        "title": "Format All Code Blocks",
+        "category": "MD Code Assist"
+      },
+      {
+        "command": "mdCodeAssist.formatCurrentBlock",
+        "title": "Format Current Code Block",
+        "category": "MD Code Assist"
+      },
+      {
+        "command": "mdCodeAssist.showDiagnostics",
+        "title": "Show Code Block Diagnostics",
+        "category": "MD Code Assist"
+      },
+      {
+        "command": "mdCodeAssist.diagnoseCurrentBlock",
+        "title": "Diagnose Current Code Block",
+        "category": "MD Code Assist"
+      }
+    ],
+    "configuration": {
+      "title": "MD Code Assist",
+      "properties": {
+        "mdCodeAssist.format.enabledLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "javascript",
+            "typescript",
+            "python",
+            "json",
+            "yaml",
+            "shell"
+          ],
+          "description": "Languages for which code block formatting is enabled."
+        },
+        "mdCodeAssist.diagnostics.enabledLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "javascript",
+            "typescript"
+          ],
+          "description": "Languages for which inline diagnostics are enabled."
+        },
+        "mdCodeAssist.formatters.blackPath": {
+          "type": "string",
+          "default": "black",
+          "description": "Path to the Black Python formatter executable."
+        },
+        "mdCodeAssist.formatters.shfmtPath": {
+          "type": "string",
+          "default": "shfmt",
+          "description": "Path to the shfmt shell formatter executable."
+        },
+        "mdCodeAssist.diagnostics.severityLevel": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "info",
+            "hint"
+          ],
+          "default": "warning",
+          "description": "Minimum diagnostic severity level to display."
+        },
+        "mdCodeAssist.decorations.showGutterIcons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show colored gutter icons for diagnostics in code blocks."
+        },
+        "mdCodeAssist.decorations.showInlineErrors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline error text after problematic lines."
+        },
+        "mdCodeAssist.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically format all code blocks when saving a Markdown file."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "compile": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "prettier": "^3.2.5",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^2.27.0",
+    "babel-jest": "^29.7.0",
+    "esbuild": "^0.21.5",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.5",
+    "typescript": "^5.5.3"
+  }
+}

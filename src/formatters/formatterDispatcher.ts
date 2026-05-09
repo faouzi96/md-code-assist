@@ -38,6 +38,7 @@ export async function dispatchFormat(block: CodeBlock): Promise<FormatResult> {
   const executablePath = settings.formatters[block.language as keyof typeof settings.formatters];
   return formatter.format(block.content, {
     language: block.language,
+    rawLanguage: block.rawLanguage,
     executablePath: typeof executablePath === 'string' ? executablePath : undefined,
   });
 }

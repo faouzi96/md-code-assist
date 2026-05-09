@@ -2,6 +2,8 @@
 export interface FormatOptions {
   /** Canonical language ID (e.g. "typescript", "python"). */
   language: string;
+  /** Raw fence label as written (e.g. "bash", "zsh", "sh"). */
+  rawLanguage?: string;
   /** Absolute path to the formatter executable (for CLI-based formatters). */
   executablePath?: string;
 }

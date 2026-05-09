@@ -30,13 +30,23 @@ export function getSettings(): ExtensionSettings {
         'python',
         'json',
         'yaml',
+        'html',
+        'css',
         'shell',
+        'graphql',
+        'markdown',
       ],
     },
     diagnostics: {
       enabledLanguages: config.get<string[]>('diagnostics.enabledLanguages') ?? [
         'javascript',
         'typescript',
+        'python',
+        'json',
+        'yaml',
+        'css',
+        'html',
+        'shell',
       ],
       severityLevel:
         config.get<'error' | 'warning' | 'info' | 'hint'>('diagnostics.severityLevel') ?? 'warning',

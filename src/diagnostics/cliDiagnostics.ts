@@ -6,6 +6,9 @@ import { runCli } from '../utils/cliRunner';
 import { isToolAvailable } from '../utils/toolDetector';
 import { Logger } from '../utils/logger';
 import type { CodeBlock } from '../parser/types';
+import * as jsYaml from 'js-yaml';
+import postcss from 'postcss';
+import * as parse5 from 'parse5';
 
 const LANG_EXT: Record<string, string> = {
   javascript: '.js',
@@ -30,6 +33,12 @@ export async function diagnoseBlock(block: CodeBlock): Promise<vscode.Diagnostic
       return runShellCheck(block);
     case 'json':
       return runJsonCheck(block);
+    case 'yaml':
+      return runYamlCheck(block);
+    case 'css':
+      return runCssCheck(block);
+    case 'html':
+      return runHtmlCheck(block);
     default:
       return [];
   }
@@ -154,20 +163,51 @@ interface ShellCheckItem {
 }
 
 async function runShellCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
-  if (!(await isToolAvailable('shellcheck'))) {
+  // Prefer shellcheck for rich diagnostics; fall back to prettier-plugin-sh parse errors.
+  if (await isToolAvailable('shellcheck')) {
+    const tmpFile = writeTempFile(block.content, '.sh');
+    try {
+      // shellcheck exits non-zero when issues are found — that is expected
+      const result = await runCli('shellcheck', ['--format=json', tmpFile]);
+      return parseShellCheckJson(result.stdout);
+    } catch (err) {
+      Logger.warn(`shellcheck failed: ${String(err)}`);
+      return [];
+    } finally {
+      deleteTempFile(tmpFile);
+    }
+  }
+  // Fallback: use prettier-plugin-sh to catch hard syntax errors.
+  return runShellSyntaxCheck(block);
+}
+
+async function runShellSyntaxCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  // zsh uses features (e.g. `for k v in`) unsupported by sh-syntax — skip to avoid false positives.
+  if (block.rawLanguage === 'zsh') {
     return [];
   }
-
-  const tmpFile = writeTempFile(block.content, '.sh');
+  // Map fence label → sh-syntax variant number: 0=LangBash, 1=LangPOSIX (default).
+  const variant = block.rawLanguage === 'bash' ? 0 : 1;
   try {
-    // shellcheck exits non-zero when issues are found — that is expected
-    const result = await runCli('shellcheck', ['--format=json', tmpFile]);
-    return parseShellCheckJson(result.stdout);
-  } catch (err) {
-    Logger.warn(`shellcheck failed: ${String(err)}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = await import('prettier-plugin-sh');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const plugin: any = (mod as any).default ?? mod;
+    const prettier = (await import('prettier')) as typeof import('prettier');
+    await prettier.format(block.content, {
+      parser: 'sh',
+      plugins: [plugin],
+      variant,
+    } as Parameters<typeof prettier.format>[1]);
     return [];
-  } finally {
-    deleteTempFile(tmpFile);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // prettier-plugin-sh error format: "... (N:M)"
+    const posMatch = /\((\d+):(\d+)\)/.exec(msg);
+    const line = posMatch ? Math.max(0, parseInt(posMatch[1], 10) - 1) : 0;
+    const col = posMatch ? Math.max(0, parseInt(posMatch[2], 10) - 1) : 0;
+    const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
+    return [new vscode.Diagnostic(range, `Syntax error: ${msg}`, vscode.DiagnosticSeverity.Error)];
   }
 }
 
@@ -206,6 +246,69 @@ function shellCheckSeverity(level: string): vscode.DiagnosticSeverity {
     default:
       return vscode.DiagnosticSeverity.Hint;
   }
+}
+
+// ---------------------------------------------------------------------------
+// YAML — in-process parse via js-yaml
+// ---------------------------------------------------------------------------
+
+function runYamlCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  try {
+    jsYaml.load(block.content);
+    return Promise.resolve([]);
+  } catch (e) {
+    if (e instanceof jsYaml.YAMLException) {
+      const line = e.mark ? Math.max(0, e.mark.line) : 0;
+      const col = e.mark ? Math.max(0, e.mark.column) : 0;
+      const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
+      return Promise.resolve([
+        new vscode.Diagnostic(range, e.reason, vscode.DiagnosticSeverity.Error),
+      ]);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    const range = new vscode.Range(0, 0, 0, Number.MAX_SAFE_INTEGER);
+    return Promise.resolve([new vscode.Diagnostic(range, msg, vscode.DiagnosticSeverity.Error)]);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CSS — in-process parse via postcss
+// ---------------------------------------------------------------------------
+
+function runCssCheck(block: CodeBlock): vscode.Diagnostic[] {
+  try {
+    const result = postcss().process(block.content, { from: undefined });
+    // Accessing nodes triggers parsing
+    void result.root.nodes;
+    return [];
+  } catch (e) {
+    // postcss CssSyntaxError has line/column/reason properties
+    const err = e as { line?: number; column?: number; reason?: string; message?: string };
+    const line = err.line !== null && err.line !== undefined ? Math.max(0, err.line - 1) : 0;
+    const col = err.column !== null && err.column !== undefined ? Math.max(0, err.column - 1) : 0;
+    const msg = err.reason ?? err.message ?? String(e);
+    const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
+    return [new vscode.Diagnostic(range, msg, vscode.DiagnosticSeverity.Error)];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// HTML — in-process parse via parse5
+// ---------------------------------------------------------------------------
+
+function runHtmlCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  const diags: vscode.Diagnostic[] = [];
+  parse5.parse(block.content, {
+    onParseError(err) {
+      const line = Math.max(0, err.startLine - 1);
+      const col = Math.max(0, err.startCol - 1);
+      const endLine = Math.max(0, err.endLine - 1);
+      const endCol = Math.max(0, err.endCol);
+      const range = new vscode.Range(line, col, endLine, endCol);
+      diags.push(new vscode.Diagnostic(range, err.code, vscode.DiagnosticSeverity.Warning));
+    },
+  });
+  return Promise.resolve(diags);
 }
 
 // ---------------------------------------------------------------------------

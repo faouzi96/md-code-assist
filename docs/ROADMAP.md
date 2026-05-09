@@ -123,7 +123,60 @@ This document outlines the development phases, milestones, and deployment strate
 
 ## Post-Launch Roadmap
 
-### Version 1.1 (Month 2)
+### Version 1.1 — Self-Contained Formatting (Month 2)
+
+**Goal:** Zero external tool requirements for the six core languages. Users get working formatting out of the box without installing Black, shfmt, or anything else.
+
+#### Target languages
+
+| Language | Fence labels | Bundled formatter | Notes |
+|----------|-------------|-------------------|-------|
+| JavaScript | `js`, `jsx`, `javascript` | Prettier (already bundled) | No change needed |
+| TypeScript | `ts`, `tsx`, `typescript` | Prettier (already bundled) | No change needed |
+| JSON | `json`, `jsonc` | Prettier (already bundled) | No change needed |
+| YAML | `yaml`, `yml` | Prettier (already bundled) | No change needed |
+| Python | `python`, `py`, `python3` | **`prettier-plugin-python` or `pyink` WASM** | Replace Black CLI dependency |
+| Shell / Bash / Zsh | `sh`, `bash`, `zsh`, `shell`, `shellscript` | **`mvdan/sh` compiled to WASM** | Replace shfmt CLI dependency |
+
+#### Work items
+
+| Task | Description | Priority |
+|------|-------------|----------|
+| Audit Prettier coverage | Confirm JS/TS/JSON/YAML all work correctly through Prettier 3 bundled today — no regressions | High |
+| Evaluate Python WASM formatters | Spike `prettier-plugin-python`, `@nicolo-ribaudo/prettier-plugin-python`, and `ruff` WASM builds. Pick the one with the best formatting fidelity + bundle size trade-off | High |
+| Embed Python formatter | Add chosen Python formatter as a bundled Node dependency; wire into `PrettierFormatter` or a new `PythonFormatter` that uses it | High |
+| Evaluate shfmt WASM | Spike `@nicolo-ribaudo/shfmt-wasm` or compile `mvdan/sh` to WASM via TinyGo/wasm-pack. Measure bundle size impact | High |
+| Embed Shell formatter | Wrap chosen WASM shfmt in `ShfmtFormatter.format()` so no CLI spawn is needed | High |
+| Remove CLI-only fallback messages | Once embedded formatters are in place, remove "please install Black / shfmt" warnings for these six languages; keep them only for any future opt-in external formatters | Medium |
+| Update `.vscodeignore` | Include any new WASM or plugin assets; exclude debug symbols | Medium |
+| Bundle size audit | Ensure total VSIX stays under 10 MB after adding WASM payloads | High |
+| Update `isAvailable()` | Return `true` unconditionally for embedded formatters (no tool detection needed) | Medium |
+| Regression tests | Add Jest fixtures for Python and Shell blocks to `test/unit/formatters/` | High |
+| Update README + docs | Remove "Requirements: Black / shfmt" from README; update Supported Languages table | Low |
+
+#### Decision criteria for Python formatter
+
+Evaluate each candidate against:
+1. **Formatting fidelity** — output matches Black or `ruff format` for common patterns
+2. **Bundle size** — WASM + JS glue should be < 3 MB
+3. **Speed** — format a 200-line Python block in < 500 ms in the extension host
+4. **Maintenance** — actively maintained, compatible with Prettier 3 plugin API
+
+#### Decision criteria for Shell formatter
+
+Evaluate each candidate against:
+1. **Fidelity** — output matches shfmt for POSIX sh, bash, and zsh
+2. **Bundle size** — WASM binary < 2 MB
+3. **POSIX compliance** — correctly handles here-docs, subshells, arrays
+4. **License** — BSD/MIT compatible
+
+#### Deliverable
+
+Users open a Markdown file with Python or Shell blocks, run **Format All Code Blocks**, and get correctly formatted output — with no setup, no pip install, no brew install.
+
+---
+
+### Version 1.2 (Month 3)
 
 - [ ] Additional language support (Go, Rust, Ruby)
 - [ ] Workspace-level formatter configuration

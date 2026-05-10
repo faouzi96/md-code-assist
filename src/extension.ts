@@ -7,15 +7,23 @@ import { getSettings } from './config/settings';
 import { formatterRegistry } from './formatters/formatterRegistry';
 import { PrettierFormatter } from './formatters/prettierFormatter';
 import { BlackFormatter } from './formatters/blackFormatter';
-import { BlackExtensionFormatter, ensureBlackExtension } from './formatters/blackExtensionFormatter';
+import {
+  BlackExtensionFormatter,
+  ensureBlackExtension,
+} from './formatters/blackExtensionFormatter';
 import { ShfmtFormatter } from './formatters/shfmtFormatter';
+import {
+  ShfmtExtensionFormatter,
+  ensureShfmtExtension,
+} from './formatters/shfmtExtensionFormatter';
+import { ensureShellCheckExtension } from './diagnostics/shellCheckExtensionDiagnostics';
 
 let diagnosticProvider: DiagnosticProvider | undefined;
 let decorationManager: DecorationManager | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   Logger.initialize(context);
-  Logger.info('MD Code Assist activated.');
+  Logger.info('Markdown Code Assistant activated.');
 
   // Register formatters.
   // Registration order matters: last registered wins for overlapping languages.
@@ -27,6 +35,7 @@ export function activate(context: vscode.ExtensionContext): void {
   formatterRegistry.register(new BlackFormatter(settings.formatters.blackPath));
   formatterRegistry.register(new ShfmtFormatter(settings.formatters.shfmtPath));
   formatterRegistry.register(new BlackExtensionFormatter());
+  formatterRegistry.register(new ShfmtExtensionFormatter()); // wins over ShfmtFormatter CLI
   formatterRegistry.register(new PrettierFormatter());
 
   // Auto-install the Black Formatter extension in the background if absent.
@@ -36,6 +45,18 @@ export function activate(context: vscode.ExtensionContext): void {
       Logger.info(
         'Python formatting requires either the ms-python.black-formatter extension or black CLI.',
       );
+    }
+  });
+
+  void ensureShfmtExtension().then((installed) => {
+    if (!installed) {
+      Logger.info('Shell formatting requires either the mkhl.shfmt extension or shfmt CLI.');
+    }
+  });
+
+  void ensureShellCheckExtension().then((installed) => {
+    if (!installed) {
+      Logger.info('Shell diagnostics require the timonwong.shellcheck extension.');
     }
   });
 
@@ -103,5 +124,5 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   diagnosticProvider?.dispose();
-  Logger.info('MD Code Assist deactivated.');
+  Logger.info('Markdown Code Assistant deactivated.');
 }

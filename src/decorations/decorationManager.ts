@@ -5,7 +5,7 @@ import { getSettings } from '../config/settings';
 
 type SeverityKey = 'error' | 'warning' | 'info' | 'hint';
 
-/** Manages all editor decorations for MD Code Assist. */
+/** Manages all editor decorations for Markdown Code Assistant. */
 export class DecorationManager implements vscode.Disposable {
   private gutterTypes = new Map<vscode.DiagnosticSeverity, vscode.TextEditorDecorationType>();
   private inlineTypes = new Map<vscode.DiagnosticSeverity, vscode.TextEditorDecorationType>();

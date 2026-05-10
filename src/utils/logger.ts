@@ -4,7 +4,7 @@ let outputChannel: vscode.OutputChannel | undefined;
 
 export const Logger = {
   initialize(_context: vscode.ExtensionContext): void {
-    outputChannel = vscode.window.createOutputChannel('MD Code Assist');
+    outputChannel = vscode.window.createOutputChannel('Markdown Code Assistant');
   },
 
   info(message: string): void {

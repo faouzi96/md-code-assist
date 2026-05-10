@@ -11,7 +11,7 @@ export class DiagnosticProvider {
   private readonly decorationManager: DecorationManager;
 
   constructor(decorationManager: DecorationManager) {
-    this.collection = vscode.languages.createDiagnosticCollection('MD Code Assist');
+    this.collection = vscode.languages.createDiagnosticCollection('Markdown Code Assistant');
     this.decorationManager = decorationManager;
   }
 
@@ -57,7 +57,7 @@ export class DiagnosticProvider {
 
     if (!block) {
       void vscode.window.showInformationMessage(
-        'MD Code Assist: Cursor is not inside a diagnosable code block.',
+        'Markdown Code Assistant: Cursor is not inside a diagnosable code block.',
       );
       return;
     }
@@ -78,10 +78,12 @@ export class DiagnosticProvider {
 
     const count = mapped.length;
     if (count === 0) {
-      void vscode.window.showInformationMessage('MD Code Assist: No issues found in this block.');
+      void vscode.window.showInformationMessage(
+        'Markdown Code Assistant: No issues found in this block.',
+      );
     } else {
       void vscode.window.showWarningMessage(
-        `MD Code Assist: ${count} issue(s) found in this block.`,
+        `Markdown Code Assistant: ${count} issue(s) found in this block.`,
       );
     }
   }

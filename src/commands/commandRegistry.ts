@@ -17,7 +17,7 @@ export function registerCommands(
         void provider.refresh(editor.document);
       } else {
         void vscode.window.showWarningMessage(
-          'MD Code Assist: Open a Markdown file to show diagnostics.',
+          'Markdown Code Assistant: Open a Markdown file to show diagnostics.',
         );
       }
     }),
@@ -28,7 +28,7 @@ export function registerCommands(
         void provider.refreshBlock(editor.document, editor.selection.active.line);
       } else {
         void vscode.window.showWarningMessage(
-          'MD Code Assist: Open a Markdown file to diagnose a block.',
+          'Markdown Code Assistant: Open a Markdown file to diagnose a block.',
         );
       }
     }),

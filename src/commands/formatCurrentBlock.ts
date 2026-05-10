@@ -10,7 +10,9 @@ import { Logger } from '../utils/logger';
 export async function formatCurrentBlockCommand(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'markdown') {
-    void vscode.window.showWarningMessage('MD Code Assist: Open a Markdown file to format.');
+    void vscode.window.showWarningMessage(
+      'Markdown Code Assistant: Open a Markdown file to format.',
+    );
     return;
   }
 
@@ -23,7 +25,9 @@ export async function formatCurrentBlockCommand(): Promise<void> {
   );
 
   if (!block) {
-    void vscode.window.showInformationMessage('MD Code Assist: Cursor is not inside a code block.');
+    void vscode.window.showInformationMessage(
+      'Markdown Code Assistant: Cursor is not inside a code block.',
+    );
     return;
   }
 
@@ -31,14 +35,14 @@ export async function formatCurrentBlockCommand(): Promise<void> {
 
   if (!result.success || result.formatted === undefined) {
     void vscode.window.showErrorMessage(
-      `MD Code Assist: Could not format block — ${result.error ?? 'unknown error'}`,
+      `Markdown Code Assistant: Could not format block — ${result.error ?? 'unknown error'}`,
     );
     return;
   }
 
   if (result.formatted === block.content) {
     void vscode.window.showInformationMessage(
-      `MD Code Assist: Block already correctly formatted (${block.language}).`,
+      `Markdown Code Assistant: Block already correctly formatted (${block.language}).`,
     );
     return;
   }

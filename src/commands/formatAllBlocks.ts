@@ -41,7 +41,7 @@ export async function formatDocument(
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Window,
-      title: 'MD Code Assist: Formatting code blocks…',
+      title: 'Markdown Code Assistant: Formatting code blocks…',
       cancellable: false,
     },
     async (progress) => {
@@ -93,7 +93,9 @@ export async function formatDocument(
 export async function formatAllBlocksCommand(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'markdown') {
-    void vscode.window.showWarningMessage('MD Code Assist: Open a Markdown file to format.');
+    void vscode.window.showWarningMessage(
+      'Markdown Code Assistant: Open a Markdown file to format.',
+    );
     return;
   }
 
@@ -102,22 +104,24 @@ export async function formatAllBlocksCommand(): Promise<void> {
   tokenSource.dispose();
 
   if (summary.blockCount === 0) {
-    void vscode.window.showInformationMessage('MD Code Assist: No fenced code blocks found.');
+    void vscode.window.showInformationMessage(
+      'Markdown Code Assistant: No fenced code blocks found.',
+    );
     return;
   }
 
   if (summary.formattedCount === 0) {
     if (summary.alreadyFormattedCount > 0 && summary.skippedCount === 0) {
       void vscode.window.showInformationMessage(
-        `MD Code Assist: ${summary.alreadyFormattedCount} block(s) already correctly formatted.`,
+        `Markdown Code Assistant: ${summary.alreadyFormattedCount} block(s) already correctly formatted.`,
       );
     } else if (summary.skippedCount > 0 && summary.alreadyFormattedCount === 0) {
       void vscode.window.showWarningMessage(
-        `MD Code Assist: ${summary.skippedCount} block(s) skipped — language not enabled or formatter unavailable. Check the Output panel for details.`,
+        `Markdown Code Assistant: ${summary.skippedCount} block(s) skipped — language not enabled or formatter unavailable. Check the Output panel for details.`,
       );
     } else {
       void vscode.window.showInformationMessage(
-        `MD Code Assist: Nothing to format (${summary.alreadyFormattedCount} already formatted, ${summary.skippedCount} skipped).`,
+        `Markdown Code Assistant: Nothing to format (${summary.alreadyFormattedCount} already formatted, ${summary.skippedCount} skipped).`,
       );
     }
     return;
@@ -128,7 +132,7 @@ export async function formatAllBlocksCommand(): Promise<void> {
   await vscode.workspace.applyEdit(workspaceEdit);
 
   void vscode.window.showInformationMessage(
-    `MD Code Assist: Formatted ${summary.formattedCount} block(s).` +
+    `Markdown Code Assistant: Formatted ${summary.formattedCount} block(s).` +
       (summary.alreadyFormattedCount > 0
         ? ` (${summary.alreadyFormattedCount} already formatted)`
         : ''),

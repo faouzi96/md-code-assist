@@ -29,7 +29,7 @@ export async function dispatchFormat(block: CodeBlock): Promise<FormatResult> {
   const available = await formatter.isAvailable();
   if (!available) {
     void vscode.window.showWarningMessage(
-      `MD Code Assist: Formatter for "${block.language}" is not available. ` +
+      `Markdown Code Assistant: Formatter for "${block.language}" is not available. ` +
         `Please install the required tool and try again.`,
     );
     return { success: false, error: `Formatter for "${block.language}" not available` };

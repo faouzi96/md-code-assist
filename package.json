@@ -1,6 +1,6 @@
 {
   "name": "md-code-assist",
-  "displayName": "MD Code Assist",
+  "displayName": "Markdown Code Assistant",
   "description": "Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.",
   "version": "0.1.0",
   "publisher": "md-code-assist",
@@ -37,26 +37,26 @@
       {
         "command": "mdCodeAssist.formatAllBlocks",
         "title": "Format All Code Blocks",
-        "category": "MD Code Assist"
+        "category": "Markdown Code Assistant"
       },
       {
         "command": "mdCodeAssist.formatCurrentBlock",
         "title": "Format Current Code Block",
-        "category": "MD Code Assist"
+        "category": "Markdown Code Assistant"
       },
       {
         "command": "mdCodeAssist.showDiagnostics",
         "title": "Show Code Block Diagnostics",
-        "category": "MD Code Assist"
+        "category": "Markdown Code Assistant"
       },
       {
         "command": "mdCodeAssist.diagnoseCurrentBlock",
         "title": "Diagnose Current Code Block",
-        "category": "MD Code Assist"
+        "category": "Markdown Code Assistant"
       }
     ],
     "configuration": {
-      "title": "MD Code Assist",
+      "title": "Markdown Code Assistant",
       "properties": {
         "mdCodeAssist.format.enabledLanguages": {
           "type": "array",

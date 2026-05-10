@@ -4,6 +4,18 @@
 
 The architecture is solid and well-thought-out. The pipeline (parse → extract → format/diagnose → map back) is clean, the code style is consistent, and the separation of concerns is good. This is a strong foundation.
 
+### Resolved Since Initial Assessment
+
+| Item | Resolution |
+| ---- | ---------- |
+| Zero-friction Python formatting | `ms-python.black-formatter` extension auto-installed on activation via `ensureBlackExtension()` |
+| Zero-friction Shell formatting | `mkhl.shfmt` extension auto-installed on activation via `ensureShfmtExtension()` |
+| Zero-friction Shell diagnostics | `timonwong.shellcheck` extension auto-installed on activation via `ensureShellCheckExtension()` |
+| Broken Jest globals (`it`/`expect`) | Added `types: ['node', 'jest']` to ts-jest tsconfig override in `jest.config.js` |
+| `CodeBlock` fixture missing `rawLanguage` | Fixed `makeBlock()` in `diagnosticMapper.test.ts` |
+| Pre-existing ESLint `no-unsafe-*` errors | Extended disable comment in `cliDiagnostics.ts` to cover the dynamic import |
+| Extension name inconsistency | Renamed from "MD Code Assist" to "Markdown Code Assistant" across all source, config, and docs |
+
 ---
 
 ## What's Missing
@@ -14,10 +26,10 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 - **No Open VSX listing** — Many users (especially on VSCodium or Gitpod) use the Open VSX Registry, not the Microsoft Marketplace. Missing out on that audience.
 - **Keywords are too narrow** — Add `"documentation"`, `"lint"`, `"python"`, `"javascript"`, `"format on save"`, `"code quality"` to `package.json` keywords.
 
-### 2. Zero-Friction First Run
+### 2. Zero-Friction First Run ✅ (Partially Resolved)
 
-- Users must install Black and shfmt separately for Python and Shell **only if** the VS Code extension delegates (`ms-python.black-formatter`, `mkhl.shfmt`, `timonwong.shellcheck`) are unavailable. These extensions are now auto-installed on activation, eliminating the friction wall for most users.
-- The `node --check` diagnostic for JS/TS is very limited — no linting, no type errors. It only catches parse errors. Users will expect ESLint-level feedback.
+- **Python and Shell formatting/diagnostics: resolved.** The extension now auto-installs `ms-python.black-formatter`, `mkhl.shfmt`, and `timonwong.shellcheck` via `vscode.commands.executeCommand('workbench.extensions.installExtension', ...)` on first activation. No manual CLI installation required. Diagnostic priority chain: extension → CLI fallback → `prettier-plugin-sh` (shell only).
+- **JS/TS diagnostics: still limited.** The `node --check` diagnostic only catches parse errors. Users will expect ESLint-level feedback. Next step: delegate to the `dbaeumer.vscode-eslint` extension using the same pattern as `ShfmtExtensionFormatter` and `ShellCheckExtensionDiagnostics`.
 
 ### 3. Missing Languages (High Demand)
 
@@ -42,7 +54,7 @@ Every missing language is a user who installs once and uninstalls.
 - **No block-level quick fixes** — When diagnostics fire, offering a "Format this block" code action (lightbulb) would be a killer feature.
 - **No diff preview** — Before applying formatting, showing a diff builds trust with cautious users.
 - **No per-block language override** — Some users want a block formatted with different config (e.g., 2-space indent JSON vs. 4-space).
-- **No "ignore block" directive** — e.g., ` ```js <!-- md-code-assist-ignore --> ` to skip a block.
+- **No "ignore block" directive** — e.g., ` ```js <!-- markdown-code-assistant-ignore --> ` to skip a block.
 - **No telemetry (opt-in)** — You can't improve what you can't measure. Optional telemetry (like `@vscode/extension-telemetry`) would show which languages are used most.
 
 ### 5. Testing Gaps
@@ -59,22 +71,26 @@ Every missing language is a user who installs once and uninstalls.
 
 ### 7. Documentation
 
-- `ARCHITECTURE.md` and `CONTRIBUTING.md` are excellent — rare for an early-stage extension.
+- `ARCHITECTURE.md`, `CONTRIBUTING.md`, `README.md`, `ROADMAP.md`, and `CHANGELOG.md` have all been updated to reflect the new extension-delegate architecture, the renamed extension, and the auto-install behaviour.
 - Missing: `SUPPORTED_LANGUAGES.md` (referenced in project instructions but not present in the repo).
-- Missing: a **FAQ / troubleshooting** section in README (e.g., "Why isn't Python formatting working?").
-- Missing: a **changelog with dates** in `CHANGELOG.md`.
+- Missing: a **FAQ / troubleshooting** section in README (e.g., "Why isn't the ShellCheck extension picking up errors?").
+- Missing: **dates** on entries in `CHANGELOG.md`.
 
 ---
 
 ## Priority Ranking for Maximum Impact
 
-### 1. Ship the WASM Formatters (Python + Shell)
+### ✅ ~~1. Ship the WASM Formatters (Python + Shell)~~ — Resolved
 
-Zero-install is the difference between "I tried it" and "I kept it". Removing the Black and shfmt dependencies alone would eliminate the biggest adoption barrier. Already planned in the v1.1 roadmap — should be treated as a pre-launch blocker.
+Achieved via the VS Code extension-delegate pattern instead of WASM. `ms-python.black-formatter`, `mkhl.shfmt`, and `timonwong.shellcheck` are auto-installed on activation. Zero CLI dependencies required from the user.
 
-### 2. Make a 60-Second Demo GIF
+### 1. Make a 60-Second Demo GIF
 
 Put it at the top of the README. Show: open a Markdown file with messy code blocks → run Format All → watch it clean up. This single asset will drive more installs than any individual feature.
+
+### 2. Add ESLint Extension Diagnostics for JS/TS
+
+Apply the same extension-delegate pattern (`ShfmtExtensionFormatter`, `ShellCheckExtensionDiagnostics`) to `dbaeumer.vscode-eslint`. Open a temp `.js`/`.ts` virtual document, subscribe to `onDidChangeDiagnostics`, and map results back to Markdown positions. This would transform JS/TS diagnostics from "parse errors only" to full lint feedback.
 
 ### 3. Add the Code Action Lightbulb
 
@@ -100,9 +116,9 @@ Costs ~20 lines of code, makes the extension feel alive and trustworthy. Show th
 
 ## Summary
 
-The extension is architecturally ready to be great. The core gap is:
+The extension is architecturally ready to be great. Zero-friction first-run is now solved for Python and Shell via extension delegates. The remaining gaps are:
 
-1. **Breadth of language support** — add Go, Rust, SQL at minimum
-2. **Zero-friction first run** — WASM formatters to eliminate CLI dependencies
-3. **Discoverability assets** — demo GIFs, CI badges, Open VSX listing
+1. **Discoverability assets** — demo GIFs, CI badges, Open VSX listing
+2. **JS/TS diagnostics** — extend the extension-delegate pattern to `dbaeumer.vscode-eslint`
+3. **Breadth of language support** — add Go, Rust, SQL at minimum
 4. **Power UX features** — code action lightbulbs, status bar item, ignore directives

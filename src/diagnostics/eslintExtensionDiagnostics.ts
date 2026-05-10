@@ -1,143 +1,117 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment,
+                  @typescript-eslint/no-unsafe-call,
+                  @typescript-eslint/no-unsafe-member-access,
+                  @typescript-eslint/no-unsafe-argument,
+                  @typescript-eslint/no-unsafe-return,
+                  @typescript-eslint/no-redundant-type-constituents,
+                  @typescript-eslint/no-var-requires */
+// The rules above are disabled for this file because the ESLint Node API
+// (v8) ships types that include `any` in several public members, causing
+// false-positive unsafe-* violations that cannot be resolved without
+// wholesale casting everything to `unknown`.
 import * as vscode from 'vscode';
 import { Logger } from '../utils/logger';
 import type { CodeBlock } from '../parser/types';
+import type { ESLint } from 'eslint';
 
-const ESLINT_EXTENSION_ID = 'dbaeumer.vscode-eslint';
-const DIAG_TIMEOUT_MS = 8_000;
+// ESLint and @typescript-eslint/parser are esbuild externals shipped in the
+// VSIX node_modules. Use require() at module load so they are resolved once.
+const ESLintCtor: typeof ESLint = (require('eslint') as { ESLint: typeof ESLint }).ESLint;
 
 /**
- * ESLint rules that are always false positives for fenced code block snippets.
- * Snippets lack import statements, don't always use declared variables, and
- * freely reference browser/Node globals that aren't in scope.
+ * ESLint rules focused on real logic errors only.
+ * - No style rules (avoid noise on opinionated formatting choices)
+ * - No missing-import rules (snippets intentionally lack import statements)
+ * - All rules work without type information (no tsconfig/project needed)
  */
-const SUPPRESSED_RULES = new Set([
-  'no-undef',
-  'no-unused-vars',
-  '@typescript-eslint/no-unused-vars',
-  'import/no-unresolved',
-  'import/no-extraneous-dependencies',
-  'n/no-missing-require',
-  'node/no-missing-require',
-  'no-console',
-]);
+const SNIPPET_RULES: Record<string, 'error' | 'warn'> = {
+  'no-unreachable': 'error',
+  'no-duplicate-case': 'error',
+  'no-dupe-keys': 'error',
+  'no-dupe-args': 'error',
+  'use-isnan': 'error',
+  'valid-typeof': 'error',
+  'no-const-assign': 'error',
+  'no-func-assign': 'error',
+  'no-redeclare': 'error',
+  'getter-return': 'error',
+  'no-obj-calls': 'error',
+  'no-import-assign': 'error',
+  'no-setter-return': 'error',
+  'for-direction': 'error',
+  'no-compare-neg-zero': 'error',
+  'no-unsafe-finally': 'error',
+  'no-unexpected-multiline': 'error',
+};
 
-export function isEslintExtensionAvailable(): boolean {
-  const ext = vscode.extensions.getExtension(ESLINT_EXTENSION_ID);
-  return ext !== undefined && ext.isActive;
+// Lazy-cached ESLint instance — synchronous creation, reused across calls.
+// A single espree-based instance is used for both JS and TS. The TS parser
+// (@typescript-eslint/parser) requires its full dependency tree (typescript,
+// typescript-estree, etc.) which are not shipped in the VSIX. Espree correctly
+// lints JS-compatible TS snippets; TS-specific syntax produces fatal parse
+// errors which are suppressed for TypeScript blocks (see diagnoseJsTsBlock).
+let _eslintJs: ESLint | undefined;
+
+function getEslintJs(): ESLint {
+  if (!_eslintJs) {
+    _eslintJs = new ESLintCtor({
+      useEslintrc: false,
+      overrideConfig: {
+        env: { browser: true, node: true, es2022: true },
+        parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+        rules: SNIPPET_RULES,
+      },
+    });
+  }
+  return _eslintJs;
 }
 
 /**
- * Run ESLint diagnostics on a single JS/TS code block by delegating to the
- * dbaeumer.vscode-eslint VS Code extension (no system ESLint install required
- * beyond what the workspace already uses).
+ * Lint a JS or TS code block using ESLint's Node API directly.
+ *
+ * - No workspace `.eslintrc` is loaded (`useEslintrc: false`)
+ * - No temp files are written; no editor documents are opened
+ * - Only real logic-error rules are enabled — no style, no false import errors
  *
  * Returns diagnostics in block-relative line coordinates (line 0 = first content line).
- *
- * Design notes:
- * - Uses a per-language untitled URI so VS Code associates the right language mode.
- * - Filters diagnostics to `source === 'eslint'` to ignore other providers.
- * - Suppresses rules that are always false positives for Markdown code snippets.
- * - Returns an empty array when the extension is inactive or no ESLint config is
- *   found in the workspace — the caller should fall back to `node --check`.
  */
-export async function diagnoseJsTsBlockWithExtension(
-  block: CodeBlock,
-): Promise<vscode.Diagnostic[]> {
-  const ext = block.language === 'typescript' ? '.ts' : '.js';
-  const tmpName = `__mdca_eslint_tmp__${ext}`;
-  const uri = vscode.Uri.parse(`untitled:${tmpName}`);
-
+export async function diagnoseJsBlock(block: CodeBlock): Promise<vscode.Diagnostic[]> {
   try {
-    const doc = await vscode.workspace.openTextDocument(uri);
-    const editor = await vscode.window.showTextDocument(doc, {
-      preserveFocus: true,
-      preview: true,
-      viewColumn: vscode.ViewColumn.Beside,
-    });
+    const eslint = getEslintJs();
+    const filePath = block.language === 'typescript' ? 'snippet.ts' : 'snippet.js';
+    const results = await eslint.lintText(block.content, { filePath });
 
-    // Subscribe BEFORE editing so a fast ESLint response isn't missed.
-    const diagPromise = waitForDiagnostics(uri, DIAG_TIMEOUT_MS);
+    const diags: vscode.Diagnostic[] = [];
+    for (const result of results) {
+      for (const msg of result.messages) {
+        const line = Math.max(0, msg.line - 1);
+        const col = Math.max(0, msg.column - 1);
 
-    await editor.edit((eb) => {
-      const fullRange = new vscode.Range(doc.positionAt(0), doc.positionAt(doc.getText().length));
-      eb.replace(fullRange, block.content);
-    });
+        if (msg.fatal === true) {
+          // For TypeScript, espree cannot parse TS-specific syntax (type
+          // annotations, interfaces, etc.) — suppress these parse errors to
+          // avoid false positives on valid TypeScript code.
+          if (block.language === 'typescript') {
+            continue;
+          }
+          // For JavaScript, a fatal parse error is a real syntax error.
+          const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
+          diags.push(new vscode.Diagnostic(range, msg.message, vscode.DiagnosticSeverity.Error));
+          continue;
+        }
 
-    const diags = await diagPromise;
-
-    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-
-    return diags
-      .filter((d) => d.source === 'eslint')
-      .filter((d) => {
-        const code = String(
-          typeof d.code === 'object' && d.code !== null ? d.code.value : (d.code ?? ''),
-        );
-        return !SUPPRESSED_RULES.has(code);
-      });
-  } catch (err) {
-    Logger.warn(`ESLint extension diagnostics failed: ${String(err)}`);
-    return [];
-  }
-}
-
-/**
- * Returns a promise that resolves with the current diagnostics for `uri` as soon as
- * the ESLint extension fires onDidChangeDiagnostics for that URI, or after
- * `timeoutMs` milliseconds (whichever comes first).
- */
-function waitForDiagnostics(
-  uri: vscode.Uri,
-  timeoutMs: number,
-): Promise<readonly vscode.Diagnostic[]> {
-  return new Promise((resolve) => {
-    let settled = false;
-
-    const done = (diags: readonly vscode.Diagnostic[]): void => {
-      if (!settled) {
-        settled = true;
-        sub.dispose();
-        clearTimeout(timer);
-        resolve(diags);
+        const endLine = msg.endLine !== undefined ? Math.max(0, msg.endLine - 1) : line;
+        const endCol = msg.endColumn !== undefined ? Math.max(0, msg.endColumn - 1) : col + 1;
+        const range = new vscode.Range(line, col, endLine, endCol);
+        const severity =
+          msg.severity === 2 ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning;
+        const label = msg.ruleId !== null ? `${msg.ruleId}: ${msg.message}` : msg.message;
+        diags.push(new vscode.Diagnostic(range, label, severity));
       }
-    };
-
-    const timer = setTimeout(() => done(vscode.languages.getDiagnostics(uri)), timeoutMs);
-
-    const sub = vscode.languages.onDidChangeDiagnostics((e) => {
-      if (e.uris.some((u) => u.toString() === uri.toString())) {
-        done(vscode.languages.getDiagnostics(uri));
-      }
-    });
-  });
-}
-
-/**
- * Attempt to auto-install the ESLint extension if it is not present.
- * Returns true if the extension is available after the attempt.
- */
-export async function ensureEslintExtension(): Promise<boolean> {
-  if (vscode.extensions.getExtension(ESLINT_EXTENSION_ID)) {
-    return true;
-  }
-
-  Logger.info('dbaeumer.vscode-eslint not found — attempting auto-install...');
-
-  try {
-    await vscode.commands.executeCommand(
-      'workbench.extensions.installExtension',
-      ESLINT_EXTENSION_ID,
-    );
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
-    const installed = vscode.extensions.getExtension(ESLINT_EXTENSION_ID) !== undefined;
-    if (installed) {
-      Logger.info('dbaeumer.vscode-eslint installed successfully.');
-    } else {
-      Logger.warn('dbaeumer.vscode-eslint install completed but extension not yet active.');
     }
-    return installed;
+    return diags;
   } catch (err) {
-    Logger.warn(`Failed to auto-install dbaeumer.vscode-eslint: ${String(err)}`);
-    return false;
+    Logger.warn(`ESLint diagnostics failed: ${String(err)}`);
+    return [];
   }
 }

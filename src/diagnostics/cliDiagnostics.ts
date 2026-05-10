@@ -13,22 +13,9 @@ import {
   isShellCheckExtensionAvailable,
   diagnoseShellBlockWithExtension,
 } from './shellCheckExtensionDiagnostics';
-import {
-  isEslintExtensionAvailable,
-  diagnoseJsTsBlockWithExtension,
-} from './eslintExtensionDiagnostics';
-import {
-  isDockerExtensionAvailable,
-  diagnoseDockerBlockWithExtension,
-} from './dockerExtensionDiagnostics';
-
-const LANG_EXT: Record<string, string> = {
-  javascript: '.js',
-  typescript: '.ts',
-  python: '.py',
-  shell: '.sh',
-  json: '.json',
-};
+import { diagnoseJsBlock } from './eslintExtensionDiagnostics';
+import { diagnoseTypescriptBlock } from './typescriptDiagnostics';
+import { Parser as SqlParser } from 'node-sql-parser';
 
 /**
  * Run CLI-based diagnostics for a single code block.
@@ -37,8 +24,9 @@ const LANG_EXT: Record<string, string> = {
 export async function diagnoseBlock(block: CodeBlock): Promise<vscode.Diagnostic[]> {
   switch (block.language) {
     case 'javascript':
-    case 'typescript':
       return runNodeCheck(block);
+    case 'typescript':
+      return Promise.resolve(diagnoseTypescriptBlock(block));
     case 'python':
       return runPyCompile(block);
     case 'shell':
@@ -53,8 +41,6 @@ export async function diagnoseBlock(block: CodeBlock): Promise<vscode.Diagnostic
       return runHtmlCheck(block);
     case 'sql':
       return runSqlCheck(block);
-    case 'dockerfile':
-      return runDockerfileCheck(block);
     default:
       return [];
   }
@@ -82,55 +68,11 @@ function deleteTempFile(filePath: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// JavaScript / TypeScript — ESLint extension → node --check fallback
+// JavaScript / TypeScript — ESLint Node API (in-process, no workspace config)
 // ---------------------------------------------------------------------------
 
-async function runNodeCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
-  // Prefer the ESLint extension for richer lint feedback (undefined variables,
-  // type mismatches, style rules, etc.).  Only falls back to node --check when
-  // the extension is unavailable or returns no diagnostics (which can mean
-  // "no ESLint config in workspace" — still need parse-error coverage).
-  if (isEslintExtensionAvailable()) {
-    const eslintDiags = await diagnoseJsTsBlockWithExtension(block);
-    if (eslintDiags.length > 0) {
-      return eslintDiags;
-    }
-  }
-
-  // Fallback: node --check catches syntax / parse errors only.
-  const ext = LANG_EXT[block.language] ?? '.js';
-  const tmpFile = writeTempFile(block.content, ext);
-  try {
-    const result = await runCli('node', ['--check', tmpFile]);
-    if (result.exitCode === 0) {
-      return [];
-    }
-    return parseNodeErrors(result.stderr, tmpFile);
-  } catch (err) {
-    Logger.warn(`node --check failed: ${String(err)}`);
-    return [];
-  } finally {
-    deleteTempFile(tmpFile);
-  }
-}
-
-/**
- * Parse `node --check` stderr.
- * Format: "/path/to/file.js:3\n  code\n  ^\nSyntaxError: message"
- */
-function parseNodeErrors(stderr: string, tmpFile: string): vscode.Diagnostic[] {
-  const escapedPath = tmpFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const linePattern = new RegExp(`${escapedPath}:(\\d+)`);
-  const lineMatch = linePattern.exec(stderr);
-
-  const errorMatch = /^(SyntaxError|ReferenceError|TypeError|RangeError):\s*(.+)$/m.exec(stderr);
-  const message = errorMatch
-    ? `${errorMatch[1]}: ${errorMatch[2]}`
-    : (stderr.trim().split('\n').pop()?.trim() ?? 'Syntax error');
-
-  const line = lineMatch ? Math.max(0, parseInt(lineMatch[1], 10) - 1) : 0;
-  const range = new vscode.Range(line, 0, line, Number.MAX_SAFE_INTEGER);
-  return [new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error)];
+function runNodeCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  return diagnoseJsBlock(block);
 }
 
 // ---------------------------------------------------------------------------
@@ -366,42 +308,23 @@ function runJsonCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
 // ---------------------------------------------------------------------------
 // SQL — parse via prettier-plugin-sql (catches syntax errors)
 // ---------------------------------------------------------------------------
+// SQL — validate via node-sql-parser (real syntax checker)
+// ---------------------------------------------------------------------------
 
-async function runSqlCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+function runSqlCheck(block: CodeBlock): vscode.Diagnostic[] {
+  const parser = new SqlParser();
   try {
-    const mod = await import('prettier-plugin-sql');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const plugin: any = (mod as any).default ?? mod;
-    const prettier = (await import('prettier')) as typeof import('prettier');
-    await prettier.format(block.content, {
-      parser: 'sql',
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      plugins: [plugin],
-    } as Parameters<typeof prettier.format>[1]);
+    parser.parse(block.content);
     return [];
-  } catch (err) {
+  } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    // prettier-plugin-sql error format may include "line N" or "N:M" position hints
-    const lineColMatch = /(\d+):(\d+)/.exec(msg);
-    const lineMatch = lineColMatch ? null : /line[: ]+(\d+)/i.exec(msg);
-    const line = lineColMatch
-      ? Math.max(0, parseInt(lineColMatch[1], 10) - 1)
-      : lineMatch
-        ? Math.max(0, parseInt(lineMatch[1], 10) - 1)
-        : 0;
-    const col = lineColMatch ? Math.max(0, parseInt(lineColMatch[2], 10) - 1) : 0;
+    // node-sql-parser (PEG.js) errors carry a `location` property with 1-based line/column.
+    const loc = (err as { location?: { start?: { line?: number; column?: number } } }).location;
+    const line = loc?.start?.line !== undefined ? Math.max(0, loc.start.line - 1) : 0;
+    const col = loc?.start?.column !== undefined ? Math.max(0, loc.start.column - 1) : 0;
     const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
-    return [new vscode.Diagnostic(range, `SQL syntax error: ${msg}`, vscode.DiagnosticSeverity.Error)];
+    return [
+      new vscode.Diagnostic(range, `SQL syntax error: ${msg}`, vscode.DiagnosticSeverity.Error),
+    ];
   }
-}
-
-// ---------------------------------------------------------------------------
-// Dockerfile — Docker extension → no CLI fallback (Docker extension is auto-installed)
-// ---------------------------------------------------------------------------
-
-async function runDockerfileCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
-  if (isDockerExtensionAvailable()) {
-    return diagnoseDockerBlockWithExtension(block);
-  }
-  return [];
 }

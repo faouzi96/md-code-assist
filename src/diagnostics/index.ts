@@ -6,13 +6,6 @@ export {
   diagnoseShellBlockWithExtension,
   ensureShellCheckExtension,
 } from './shellCheckExtensionDiagnostics';
-export {
-  isEslintExtensionAvailable,
-  diagnoseJsTsBlockWithExtension,
-  ensureEslintExtension,
-} from './eslintExtensionDiagnostics';
-export {
-  isDockerExtensionAvailable,
-  diagnoseDockerBlockWithExtension,
-} from './dockerExtensionDiagnostics';
+export { diagnoseJsBlock } from './eslintExtensionDiagnostics';
+export { diagnoseTypescriptBlock } from './typescriptDiagnostics';
 export type { MappedDiagnostic, VirtualDocument } from './types';

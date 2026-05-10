@@ -9,6 +9,10 @@ import type { CodeBlock } from '../parser/types';
 import * as jsYaml from 'js-yaml';
 import postcss from 'postcss';
 import * as parse5 from 'parse5';
+import {
+  isShellCheckExtensionAvailable,
+  diagnoseShellBlockWithExtension,
+} from './shellCheckExtensionDiagnostics';
 
 const LANG_EXT: Record<string, string> = {
   javascript: '.js',
@@ -163,7 +167,12 @@ interface ShellCheckItem {
 }
 
 async function runShellCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
-  // Prefer shellcheck for rich diagnostics; fall back to prettier-plugin-sh parse errors.
+  // 1. Prefer the ShellCheck VS Code extension (no system install required).
+  if (isShellCheckExtensionAvailable()) {
+    return diagnoseShellBlockWithExtension(block);
+  }
+
+  // 2. Fall back to the shellcheck CLI for rich diagnostics.
   if (await isToolAvailable('shellcheck')) {
     const tmpFile = writeTempFile(block.content, '.sh');
     try {
@@ -191,7 +200,7 @@ async function runShellSyntaxCheck(block: CodeBlock): Promise<vscode.Diagnostic[
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mod = await import('prettier-plugin-sh');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const plugin: any = (mod as any).default ?? mod;
     const prettier = (await import('prettier')) as typeof import('prettier');
     await prettier.format(block.content, {

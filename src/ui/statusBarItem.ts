@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
  *   - Transient "Formatted N blocks" (3 s) after a format operation
  *   - Idle with issue count when diagnostics have fired
  *   - Idle "✓ Markdown Code Assist" when no issues *
- * Blocks tagged with `md-assistant-ignore` are excluded from the pipeline
+ * Blocks tagged with `@md-assistant-ignore` are excluded from the pipeline
  * entirely and never appear in counts. */
 export class StatusBarController {
   private readonly item: vscode.StatusBarItem;

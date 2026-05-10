@@ -3,5 +3,6 @@ export { PrettierFormatter } from './prettierFormatter';
 export { BlackFormatter } from './blackFormatter';
 export { BlackExtensionFormatter, ensureBlackExtension } from './blackExtensionFormatter';
 export { ShfmtFormatter } from './shfmtFormatter';
+export { ShfmtExtensionFormatter, ensureShfmtExtension } from './shfmtExtensionFormatter';
 export { dispatchFormat } from './formatterDispatcher';
 export type { IFormatter, FormatOptions, FormatResult } from './types';

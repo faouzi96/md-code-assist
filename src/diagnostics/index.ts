@@ -6,4 +6,9 @@ export {
   diagnoseShellBlockWithExtension,
   ensureShellCheckExtension,
 } from './shellCheckExtensionDiagnostics';
+export {
+  isEslintExtensionAvailable,
+  diagnoseJsTsBlockWithExtension,
+  ensureEslintExtension,
+} from './eslintExtensionDiagnostics';
 export type { MappedDiagnostic, VirtualDocument } from './types';

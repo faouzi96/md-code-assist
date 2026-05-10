@@ -13,6 +13,10 @@ import {
   isShellCheckExtensionAvailable,
   diagnoseShellBlockWithExtension,
 } from './shellCheckExtensionDiagnostics';
+import {
+  isEslintExtensionAvailable,
+  diagnoseJsTsBlockWithExtension,
+} from './eslintExtensionDiagnostics';
 
 const LANG_EXT: Record<string, string> = {
   javascript: '.js',
@@ -70,10 +74,22 @@ function deleteTempFile(filePath: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// JavaScript / TypeScript — node --check
+// JavaScript / TypeScript — ESLint extension → node --check fallback
 // ---------------------------------------------------------------------------
 
 async function runNodeCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  // Prefer the ESLint extension for richer lint feedback (undefined variables,
+  // type mismatches, style rules, etc.).  Only falls back to node --check when
+  // the extension is unavailable or returns no diagnostics (which can mean
+  // "no ESLint config in workspace" — still need parse-error coverage).
+  if (isEslintExtensionAvailable()) {
+    const eslintDiags = await diagnoseJsTsBlockWithExtension(block);
+    if (eslintDiags.length > 0) {
+      return eslintDiags;
+    }
+  }
+
+  // Fallback: node --check catches syntax / parse errors only.
   const ext = LANG_EXT[block.language] ?? '.js';
   const tmpFile = writeTempFile(block.content, ext);
   try {

@@ -17,6 +17,7 @@ import {
   ensureShfmtExtension,
 } from './formatters/shfmtExtensionFormatter';
 import { ensureShellCheckExtension } from './diagnostics/shellCheckExtensionDiagnostics';
+import { ensureEslintExtension } from './diagnostics/eslintExtensionDiagnostics';
 
 let diagnosticProvider: DiagnosticProvider | undefined;
 let decorationManager: DecorationManager | undefined;
@@ -57,6 +58,14 @@ export function activate(context: vscode.ExtensionContext): void {
   void ensureShellCheckExtension().then((installed) => {
     if (!installed) {
       Logger.info('Shell diagnostics require the timonwong.shellcheck extension.');
+    }
+  });
+
+  void ensureEslintExtension().then((installed) => {
+    if (!installed) {
+      Logger.info(
+        'JS/TS diagnostics require the dbaeumer.vscode-eslint extension and an ESLint config in your workspace.',
+      );
     }
   });
 

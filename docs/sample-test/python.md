@@ -20,8 +20,8 @@ print(x,y)
 ```python
 class Animal:
   def __init__(self,name,species):
-    self.name=name
-    self.species=species
+            self.name=name
+            self.species=species
   def speak(self):
     raise NotImplementedError
   def __repr__(self):

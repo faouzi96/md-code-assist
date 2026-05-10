@@ -12,7 +12,6 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 - **Inline diagnostics** — runs syntax and lint checks on code blocks and maps errors back to their exact lines in the Markdown file (Problems panel + gutter icons + inline text).
 - **Zero-install shell support** — shell/bash formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
 - **Zero-install Python formatting** — delegates to the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed). Python itself is not required for formatting.
-- **Zero-install Dockerfile support** — formatting and Hadolint diagnostics delegate to the [ms-azuretools.vscode-docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) extension (auto-installed). No system tools required.
 - **SQL formatting + diagnostics** — `prettier-plugin-sql` is bundled; SQL blocks are formatted in-process and parse errors are surfaced as diagnostics. No external tools required.
 - **Format on Save** — optional auto-format whenever you save a Markdown file.
 - **Format Document** — `Shift+Alt+F` formats all code blocks via VS Code's built-in shortcut.
@@ -29,9 +28,8 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required. |
 | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed. |
 | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed. |
-| [ms-azuretools.vscode-docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) | Dockerfile **formatting + diagnostics** (Hadolint) — auto-installed on activation. |
 
-**Prettier, prettier-plugin-sh, prettier-plugin-sql, js-yaml, postcss, and parse5 are all bundled — no installation required.**
+**Prettier, prettier-plugin-sh, prettier-plugin-sql, js-yaml, postcss, parse5, ESLint, and the TypeScript compiler are all bundled — no installation required.**
 
 ---
 
@@ -75,7 +73,8 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 | HTML | `html` |
 | CSS / SCSS / Less | `css`, `scss`, `less` |
 | GraphQL | `graphql`, `gql` |
-| Markdown (nested) | `markdown`, `md` || SQL | `sql` |
+| Markdown (nested) | `markdown`, `md` |
+| SQL | `sql` |
 ### VS Code Extensions (auto-installed, no system tools needed)
 
 | Language | Extension | Purpose |
@@ -83,7 +82,6 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 | Python | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting |
 | Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) | Formatting |
 | Shell / Bash | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) | Diagnostics |
-| Dockerfile | [ms-azuretools.vscode-docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) | Formatting + Diagnostics (Hadolint) |
 
 ### CLI fallbacks (optional)
 
@@ -103,8 +101,8 @@ All settings are under `mdCodeAssist.*` and can be set at User, Workspace, or Fo
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `format.enabledLanguages` | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown","sql","dockerfile"]` | Languages to format |
-| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell","sql","dockerfile"]` | Languages to diagnose |
+| `format.enabledLanguages` | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown","sql"]` | Languages to format |
+| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell","sql"]` | Languages to diagnose |
 | `formatters.blackPath` | `"black"` | Path to Black CLI executable (fallback) |
 | `formatters.shfmtPath` | `"shfmt"` | Path to shfmt CLI executable (fallback) |
 | `decorations.showGutterIcons` | `true` | Colored gutter icons for diagnostics |
@@ -125,8 +123,7 @@ Example — enable all languages and format on save:
     "css",
     "shell",
     "graphql",
-    "sql",
-    "dockerfile"
+    "sql"
   ],
   "mdCodeAssist.diagnostics.enabledLanguages": [
     "javascript",
@@ -137,8 +134,7 @@ Example — enable all languages and format on save:
     "html",
     "shell",
     "python",
-    "sql",
-    "dockerfile"
+    "sql"
   ],
   "mdCodeAssist.formatOnSave": true
 }

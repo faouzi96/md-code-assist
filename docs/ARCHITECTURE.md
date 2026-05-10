@@ -49,13 +49,15 @@ Markdown file (on change, debounced 500 ms)
                │ filter by diagnostics.enabledLanguages
                ▼
 ┌──────────────────────────────┐
-│  CLI Diagnostics             │  node --check (JS/TS)
+│  CLI Diagnostics             │  ESLint/espree (JS)
+│                              │  TypeScript compiler API (TS — syntax-only, no type resolution)
 │                              │  python -m py_compile (Python)
 │                              │  ShellCheck extension → shellcheck CLI → prettier-plugin-sh (Shell)
 │                              │  JSON.parse (JSON)
 │                              │  js-yaml (YAML, bundled)
 │                              │  PostCSS (CSS, bundled)
 │                              │  parse5 (HTML, bundled)
+│                              │  node-sql-parser (SQL, bundled)
 └──────────────┬───────────────┘
                │ block-relative Diagnostic[]
                ▼
@@ -85,7 +87,7 @@ src/
 ├── formatters/
 │   ├── types.ts              # IFormatter, FormatOptions, FormatResult
 │   ├── formatterRegistry.ts  # Language-to-formatter map + LANGUAGE_ALIASES
-│   ├── prettierFormatter.ts        # Prettier Node API + prettier-plugin-sh (shell)
+│   ├── prettierFormatter.ts        # Prettier Node API + prettier-plugin-sh (shell) + prettier-plugin-sql (SQL)
 │   ├── blackFormatter.ts          # Black CLI via stdin
 │   ├── shfmtFormatter.ts          # shfmt CLI via stdin (fallback)
 │   ├── blackExtensionFormatter.ts # Python via ms-python.black-formatter extension
@@ -100,7 +102,9 @@ src/
 │
 ├── diagnostics/
 │   ├── types.ts              # MappedDiagnostic, VirtualDocument
-│   ├── cliDiagnostics.ts     # Per-language CLI check runners
+│   ├── cliDiagnostics.ts     # Per-language check runners
+│   ├── eslintExtensionDiagnostics.ts # JS diagnostics via bundled ESLint/espree
+│   ├── typescriptDiagnostics.ts      # TS diagnostics via bundled TypeScript compiler API
 │   ├── shellCheckExtensionDiagnostics.ts # Shell diagnostics via timonwong.shellcheck extension
 │   ├── diagnosticMapper.ts   # Map relative → absolute positions
 │   ├── diagnosticProvider.ts # Orchestrates refresh / refreshBlock
@@ -129,6 +133,8 @@ src/
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `shell: false` in all `spawn()` calls                                  | Prevents shell injection from formatter paths or code content                                                                     |
 | `prettier` marked external in esbuild, shipped in VSIX `node_modules/` | Prettier 3 uses `import.meta.url` in its ESM plugins; bundling it to CJS causes `fileURLToPath(undefined)` at startup             |
+| TypeScript bundled into `extension.js` via esbuild                     | The TS compiler API is used for syntax-only diagnostics; bundling avoids shipping ~50 transitive deps on disk while keeping the full parser available in-process |
+| ESLint bundled into `extension.js`; `espree` shipped as an external    | `espree` uses `require.resolve()` at load time, which requires a real file on disk; all other ESLint internals bundle cleanly to CJS |
 | Language aliases duplicated in `parser/` and `formatters/`             | Avoids a circular import between the two layers                                                                                   |
 | 0-based positions internally                                           | Matches VS Code API; remark's 1-based positions are converted on extraction                                                       |
 | Debounced diagnostic refresh (500 ms)                                  | Avoids re-running checks on every keypress                                                                                        |
@@ -137,4 +143,4 @@ src/
 | `prettier-plugin-sh` (WASM) instead of `mvdan-sh`                     | `mvdan-sh` is deprecated; `prettier-plugin-sh` is the maintained replacement and integrates directly with the Prettier pipeline   |
 | `ShfmtExtensionFormatter` delegates to `mkhl.shfmt`              | Avoids requiring a system `shfmt` install; the extension bundles the binary and integrates with VS Code's formatter pipeline |
 | `BlackExtensionFormatter` delegates to `ms-python.black-formatter`     | Avoids bundling a Python runtime; the extension is auto-installed and provides a proper VS Code `TextEdit[]` response             |
-| In-process YAML/CSS/HTML diagnostics via js-yaml/PostCSS/parse5       | These parsers throw structured errors with line/column; no external CLI needed for baseline syntax checking                       |
+| In-process YAML/CSS/HTML/SQL diagnostics via js-yaml/PostCSS/parse5/node-sql-parser | These parsers throw structured errors with line/column; no external CLI needed for baseline syntax checking |

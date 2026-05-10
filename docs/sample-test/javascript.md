@@ -9,7 +9,7 @@ or place your cursor inside a block and run **Markdown Code Assistant: Format Cu
 
 ```js
 const greet = (name) => {
-  return "Hello, " + name + "!";
+  return "Hello, " + name;
 };
 
 const numbers = [1, 2, 3, 4, 5];

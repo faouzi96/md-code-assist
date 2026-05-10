@@ -16,6 +16,10 @@ import {
   ShfmtExtensionFormatter,
   ensureShfmtExtension,
 } from './formatters/shfmtExtensionFormatter';
+import {
+  DockerExtensionFormatter,
+  ensureDockerExtension,
+} from './formatters/dockerExtensionFormatter';
 import { ensureShellCheckExtension } from './diagnostics/shellCheckExtensionDiagnostics';
 import { ensureEslintExtension } from './diagnostics/eslintExtensionDiagnostics';
 
@@ -37,6 +41,7 @@ export function activate(context: vscode.ExtensionContext): void {
   formatterRegistry.register(new ShfmtFormatter(settings.formatters.shfmtPath));
   formatterRegistry.register(new BlackExtensionFormatter());
   formatterRegistry.register(new ShfmtExtensionFormatter()); // wins over ShfmtFormatter CLI
+  formatterRegistry.register(new DockerExtensionFormatter()); // Dockerfile via Docker extension
   formatterRegistry.register(new PrettierFormatter());
 
   // Auto-install the Black Formatter extension in the background if absent.
@@ -65,6 +70,14 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!installed) {
       Logger.info(
         'JS/TS diagnostics require the dbaeumer.vscode-eslint extension and an ESLint config in your workspace.',
+      );
+    }
+  });
+
+  void ensureDockerExtension().then((installed) => {
+    if (!installed) {
+      Logger.info(
+        'Dockerfile formatting and diagnostics require the ms-azuretools.vscode-docker extension.',
       );
     }
   });

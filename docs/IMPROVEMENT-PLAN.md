@@ -16,6 +16,8 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 | Pre-existing ESLint `no-unsafe-*` errors | Extended disable comment in `cliDiagnostics.ts` to cover the dynamic import |
 | Extension name inconsistency | Renamed from "MD Code Assist" to "Markdown Code Assistant" across all source, config, and docs |
 | JS/TS diagnostics limited to parse errors | `eslintExtensionDiagnostics.ts` delegates to `dbaeumer.vscode-eslint`; auto-installed on activation; falls back to `node --check` when no ESLint config present; snippet false-positive rules suppressed (`no-undef`, `no-unused-vars`, `import/no-unresolved`, etc.) |
+| SQL — no formatting or diagnostics | `prettierFormatter.ts` now loads `prettier-plugin-sql` (bundled npm package) for formatting; `cliDiagnostics.ts` surfaces Prettier parse errors as diagnostics (line/col extracted from error message) — no extra tools required |
+| Dockerfile — no formatting or diagnostics | `dockerExtensionFormatter.ts` delegates formatting to `ms-azuretools.vscode-docker` (auto-installed); `dockerExtensionDiagnostics.ts` delegates Hadolint-powered diagnostics through the same extension via `onDidChangeDiagnostics`; `docker` fence label aliased to `dockerfile` |
 
 ---
 
@@ -40,8 +42,8 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 | Go         | None            | `gofmt` is always available if Go is installed |
 | C/C++      | None            | `clang-format`                                 |
 | Java       | None            | No great bundled option, but users want it     |
-| SQL        | None            | `sql-formatter` npm package — could be bundled |
-| Dockerfile | None            | `hadolint` for diagnostics                     |
+| SQL        | ✅ Resolved      | `prettier-plugin-sql` bundled; parse errors surfaced as diagnostics |
+| Dockerfile | ✅ Resolved      | `ms-azuretools.vscode-docker` extension delegate; Hadolint diagnostics |
 | TOML       | None            | Popular in Rust/Python projects                |
 | Ruby       | None            | `rubocop`                                      |
 | PHP        | None            | `php-cs-fixer`                                 |
@@ -93,6 +95,14 @@ Put it at the top of the README. Show: open a Markdown file with messy code bloc
 
 Achieved via `eslintExtensionDiagnostics.ts`. `dbaeumer.vscode-eslint` auto-installs on activation. Diagnostic priority: ESLint extension → `node --check` fallback (parse errors when no ESLint config). Snippet false-positive rules suppressed.
 
+### ✅ ~~3. Add SQL Formatting~~ — Resolved
+
+Achieved via `prettier-plugin-sql` (pure npm package, bundled as an esbuild external shipped in the VSIX `node_modules/`). Formatting is handled by `PrettierFormatter` with `parser: 'sql'`. Parse errors are surfaced as diagnostics with line/col extraction in `cliDiagnostics.ts`. No external tools required.
+
+### ✅ ~~Dockerfile Support~~ — Resolved
+
+Formatting delegated to `ms-azuretools.vscode-docker` (auto-installed) via `DockerExtensionFormatter`. Hadolint-powered diagnostics retrieved through the same extension via `onDidChangeDiagnostics` in `dockerExtensionDiagnostics.ts`. Fence labels `dockerfile` and `docker` both handled.
+
 ### 2. Add the Code Action Lightbulb
 
 When a diagnostic fires, offer "Format this block" as a quick fix. This is an extremely discoverable workflow that makes the extension feel native to VS Code. Implement via `vscode.languages.registerCodeActionsProvider`.
@@ -101,11 +111,7 @@ When a diagnostic fires, offer "Format this block" as a quick fix. This is an ex
 
 Both `gofmt` and `rustfmt` are bundled with their respective toolchains — always available if the user has the language installed. These communities write a **lot** of documentation with code blocks.
 
-### 4. Add SQL Formatting
-
-`sql-formatter` is a pure npm package, fully bundleable, and SQL in Markdown is extremely common in data engineering docs. This is an underserved niche with high value.
-
-### 5. Set Up GitHub Actions CI
+### 4. Set Up GitHub Actions CI
 
 Required before asking anyone to contribute. Without it, external PRs stall. A basic workflow: lint → compile → test on push/PR, targeting Windows, macOS, and Linux.
 
@@ -120,5 +126,5 @@ Costs ~20 lines of code, makes the extension feel alive and trustworthy. Show th
 The extension is architecturally ready to be great. Zero-friction first-run and full-fidelity diagnostics are now solved for all supported languages via extension delegates. The remaining gaps are:
 
 1. **Discoverability assets** — demo GIFs, CI badges, Open VSX listing
-2. **Breadth of language support** — add Go, Rust, SQL at minimum
+2. **Breadth of language support** — add Go, Rust, TOML (SQL and Dockerfile are now resolved)
 3. **Power UX features** — code action lightbulbs, status bar item, ignore directives

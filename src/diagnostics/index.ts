@@ -11,4 +11,8 @@ export {
   diagnoseJsTsBlockWithExtension,
   ensureEslintExtension,
 } from './eslintExtensionDiagnostics';
+export {
+  isDockerExtensionAvailable,
+  diagnoseDockerBlockWithExtension,
+} from './dockerExtensionDiagnostics';
 export type { MappedDiagnostic, VirtualDocument } from './types';

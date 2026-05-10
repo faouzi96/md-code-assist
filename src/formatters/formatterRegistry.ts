@@ -20,6 +20,7 @@ export const LANGUAGE_ALIASES: ReadonlyMap<string, string> = new Map([
   ['less', 'css'],
   ['gql', 'graphql'],
   ['md', 'markdown'],
+  ['docker', 'dockerfile'],
 ]);
 
 /** Registry that maps canonical language IDs to formatter instances. */

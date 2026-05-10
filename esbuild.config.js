@@ -7,11 +7,11 @@ const buildOptions = {
   entryPoints: ['src/extension.ts'],
   bundle: true,
   outfile: 'dist/extension.js',
-  // 'prettier', 'prettier-plugin-sh', and 'sh-syntax' are marked external so they
-  // are NOT bundled. Their node_modules folders are shipped directly in the VSIX
-  // (see .vscodeignore). This avoids Prettier 3's ESM import.meta.url usage and
+  // 'prettier', 'prettier-plugin-sh', 'sh-syntax', and 'prettier-plugin-sql' are marked
+  // external so they are NOT bundled. Their node_modules folders are shipped directly in
+  // the VSIX (see .vscodeignore). This avoids Prettier 3's ESM import.meta.url usage and
   // sh-syntax's WASM file path resolution breaking when bundled to CJS.
-  external: ['vscode', 'prettier', 'prettier/*', 'prettier-plugin-sh', 'sh-syntax'],
+  external: ['vscode', 'prettier', 'prettier/*', 'prettier-plugin-sh', 'sh-syntax', 'prettier-plugin-sql'],
   format: 'cjs',
   platform: 'node',
   target: 'node20',

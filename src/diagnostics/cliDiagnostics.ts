@@ -17,6 +17,10 @@ import {
   isEslintExtensionAvailable,
   diagnoseJsTsBlockWithExtension,
 } from './eslintExtensionDiagnostics';
+import {
+  isDockerExtensionAvailable,
+  diagnoseDockerBlockWithExtension,
+} from './dockerExtensionDiagnostics';
 
 const LANG_EXT: Record<string, string> = {
   javascript: '.js',
@@ -47,6 +51,10 @@ export async function diagnoseBlock(block: CodeBlock): Promise<vscode.Diagnostic
       return runCssCheck(block);
     case 'html':
       return runHtmlCheck(block);
+    case 'sql':
+      return runSqlCheck(block);
+    case 'dockerfile':
+      return runDockerfileCheck(block);
     default:
       return [];
   }
@@ -353,4 +361,47 @@ function runJsonCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
     const range = new vscode.Range(line, col, line, col + 1);
     return Promise.resolve([new vscode.Diagnostic(range, msg, vscode.DiagnosticSeverity.Error)]);
   }
+}
+
+// ---------------------------------------------------------------------------
+// SQL — parse via prettier-plugin-sql (catches syntax errors)
+// ---------------------------------------------------------------------------
+
+async function runSqlCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  try {
+    const mod = await import('prettier-plugin-sql');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const plugin: any = (mod as any).default ?? mod;
+    const prettier = (await import('prettier')) as typeof import('prettier');
+    await prettier.format(block.content, {
+      parser: 'sql',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      plugins: [plugin],
+    } as Parameters<typeof prettier.format>[1]);
+    return [];
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // prettier-plugin-sql error format may include "line N" or "N:M" position hints
+    const lineColMatch = /(\d+):(\d+)/.exec(msg);
+    const lineMatch = lineColMatch ? null : /line[: ]+(\d+)/i.exec(msg);
+    const line = lineColMatch
+      ? Math.max(0, parseInt(lineColMatch[1], 10) - 1)
+      : lineMatch
+        ? Math.max(0, parseInt(lineMatch[1], 10) - 1)
+        : 0;
+    const col = lineColMatch ? Math.max(0, parseInt(lineColMatch[2], 10) - 1) : 0;
+    const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
+    return [new vscode.Diagnostic(range, `SQL syntax error: ${msg}`, vscode.DiagnosticSeverity.Error)];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dockerfile — Docker extension → no CLI fallback (Docker extension is auto-installed)
+// ---------------------------------------------------------------------------
+
+async function runDockerfileCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  if (isDockerExtensionAvailable()) {
+    return diagnoseDockerBlockWithExtension(block);
+  }
+  return [];
 }

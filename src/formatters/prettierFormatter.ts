@@ -23,6 +23,17 @@ async function getPluginSh(): Promise<Record<string, unknown>> {
   return pluginShCache;
 }
 
+// prettier-plugin-sql is loaded lazily — only when a SQL block needs formatting.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pluginSqlCache: Record<string, unknown> | undefined;
+async function getPluginSql(): Promise<Record<string, unknown>> {
+  if (!pluginSqlCache) {
+    const mod = await import('prettier-plugin-sql');
+    pluginSqlCache = (mod.default ?? mod) as Record<string, unknown>;
+  }
+  return pluginSqlCache;
+}
+
 const PRETTIER_PARSERS: ReadonlyMap<string, string> = new Map([
   ['javascript', 'babel'],
   ['typescript', 'typescript'],
@@ -34,6 +45,8 @@ const PRETTIER_PARSERS: ReadonlyMap<string, string> = new Map([
   ['markdown', 'markdown'],
   // Shell/Bash via prettier-plugin-sh (no external CLI required)
   ['shell', 'sh'],
+  // SQL via prettier-plugin-sql (no external CLI required)
+  ['sql', 'sql'],
 ]);
 
 export class PrettierFormatter implements IFormatter {
@@ -61,7 +74,7 @@ export class PrettierFormatter implements IFormatter {
       const prettier = await getPrettier();
       // Shell formatting requires the prettier-plugin-sh plugin.
       // variant: 0=LangBash, 1=LangPOSIX (default per sh-syntax enum)
-      const plugins = parser === 'sh' ? [await getPluginSh()] : [];
+      const plugins = parser === 'sh' ? [await getPluginSh()] : parser === 'sql' ? [await getPluginSql()] : [];
       const variant = parser === 'sh' && options.rawLanguage === 'bash' ? { variant: 0 } : {};
       const formatted = await prettier.format(code, {
         parser,

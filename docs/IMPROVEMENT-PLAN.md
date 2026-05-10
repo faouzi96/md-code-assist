@@ -15,9 +15,10 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 | `CodeBlock` fixture missing `rawLanguage` | Fixed `makeBlock()` in `diagnosticMapper.test.ts` |
 | Pre-existing ESLint `no-unsafe-*` errors | Extended disable comment in `cliDiagnostics.ts` to cover the dynamic import |
 | Extension name inconsistency | Renamed from "MD Code Assist" to "Markdown Code Assistant" across all source, config, and docs |
-| JS/TS diagnostics limited to parse errors | `eslintExtensionDiagnostics.ts` delegates to `dbaeumer.vscode-eslint`; auto-installed on activation; falls back to `node --check` when no ESLint config present; snippet false-positive rules suppressed (`no-undef`, `no-unused-vars`, `import/no-unresolved`, etc.) |
+| JS diagnostics limited to parse errors | `eslintExtensionDiagnostics.ts` runs ESLint (bundled into extension.js via esbuild) with espree parser; snippet false-positive rules suppressed (`no-undef`, `no-unused-vars`, etc.); `espree`/`acorn`/`acorn-jsx`/`eslint-visitor-keys` shipped as disk-level externals because espree calls `require.resolve()` at load time |
+| TypeScript diagnostics not working | `typescriptDiagnostics.ts` uses `ts.createSourceFile` + `program.getSyntacticDiagnostics` from the bundled TypeScript compiler API; syntax-only (no type resolution) to avoid false positives about missing imports in snippets |
 | SQL — no formatting or diagnostics | `prettierFormatter.ts` now loads `prettier-plugin-sql` (bundled npm package) for formatting; `cliDiagnostics.ts` surfaces Prettier parse errors as diagnostics (line/col extracted from error message) — no extra tools required |
-| Dockerfile — no formatting or diagnostics | `dockerExtensionFormatter.ts` delegates formatting to `ms-azuretools.vscode-docker` (auto-installed); `dockerExtensionDiagnostics.ts` delegates Hadolint-powered diagnostics through the same extension via `onDidChangeDiagnostics`; `docker` fence label aliased to `dockerfile` |
+| Dockerfile — formatting + diagnostics | **Descoped.** Extension delegation to `ms-azuretools.vscode-docker` was too fragile; `dockerfile` blocks are now silently skipped. Docker extension support may be revisited in a future release. |
 
 ---
 
@@ -32,7 +33,8 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 ### 2. Zero-Friction First Run ✅ (Resolved)
 
 - **Python and Shell formatting/diagnostics: resolved.** The extension now auto-installs `ms-python.black-formatter`, `mkhl.shfmt`, and `timonwong.shellcheck` via `vscode.commands.executeCommand('workbench.extensions.installExtension', ...)` on first activation. No manual CLI installation required. Diagnostic priority chain: extension → CLI fallback → `prettier-plugin-sh` (shell only).
-- **JS/TS diagnostics: resolved.** `eslintExtensionDiagnostics.ts` delegates to `dbaeumer.vscode-eslint` (auto-installed on activation), providing full lint feedback. Falls back to `node --check` when no ESLint config exists in the workspace. Snippet-only false-positive rules are suppressed.
+- **JS diagnostics: resolved.** `eslintExtensionDiagnostics.ts` runs bundled ESLint with espree; snippet false-positive rules suppressed. No external extension required.
+- **TypeScript diagnostics: resolved.** `typescriptDiagnostics.ts` uses the bundled TypeScript compiler API for syntax-only checking, with no type resolution to avoid false positives on import statements.
 
 ### 3. Missing Languages (High Demand)
 
@@ -43,7 +45,7 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 | C/C++      | None            | `clang-format`                                 |
 | Java       | None            | No great bundled option, but users want it     |
 | SQL        | ✅ Resolved      | `prettier-plugin-sql` bundled; parse errors surfaced as diagnostics |
-| Dockerfile | ✅ Resolved      | `ms-azuretools.vscode-docker` extension delegate; Hadolint diagnostics |
+| Dockerfile | Descoped         | Extension delegation too fragile; blocks silently skipped for now |
 | TOML       | None            | Popular in Rust/Python projects                |
 | Ruby       | None            | `rubocop`                                      |
 | PHP        | None            | `php-cs-fixer`                                 |
@@ -91,17 +93,18 @@ Achieved via the VS Code extension-delegate pattern instead of WASM. `ms-python.
 
 Put it at the top of the README. Show: open a Markdown file with messy code blocks → run Format All → watch it clean up. This single asset will drive more installs than any individual feature.
 
-### ✅ ~~2. Add ESLint Extension Diagnostics for JS/TS~~ — Resolved
+### ✅ ~~Add JS/TS Diagnostics~~ — Resolved
 
-Achieved via `eslintExtensionDiagnostics.ts`. `dbaeumer.vscode-eslint` auto-installs on activation. Diagnostic priority: ESLint extension → `node --check` fallback (parse errors when no ESLint config). Snippet false-positive rules suppressed.
+**JS**: bundled ESLint with espree parser in `eslintExtensionDiagnostics.ts`; no external extension required. Snippet false-positive rules suppressed.
+**TS**: `typescriptDiagnostics.ts` uses the bundled TypeScript compiler API (`ts.createSourceFile` + `getSyntacticDiagnostics`); syntax-only to avoid false positives on unresolved imports.
 
 ### ✅ ~~3. Add SQL Formatting~~ — Resolved
 
 Achieved via `prettier-plugin-sql` (pure npm package, bundled as an esbuild external shipped in the VSIX `node_modules/`). Formatting is handled by `PrettierFormatter` with `parser: 'sql'`. Parse errors are surfaced as diagnostics with line/col extraction in `cliDiagnostics.ts`. No external tools required.
 
-### ✅ ~~Dockerfile Support~~ — Resolved
+### ~~Dockerfile Support~~ — Descoped
 
-Formatting delegated to `ms-azuretools.vscode-docker` (auto-installed) via `DockerExtensionFormatter`. Hadolint-powered diagnostics retrieved through the same extension via `onDidChangeDiagnostics` in `dockerExtensionDiagnostics.ts`. Fence labels `dockerfile` and `docker` both handled.
+Extension delegation to `ms-azuretools.vscode-docker` proved too fragile in practice. Dockerfile support has been removed from formatters, diagnostics, language aliases, and enabled-language defaults. May be revisited in a future release.
 
 ### 2. Add the Code Action Lightbulb
 

@@ -10,6 +10,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
+- **TypeScript diagnostics via bundled TS compiler API** — `typescriptDiagnostics.ts` uses `ts.createSourceFile` + `program.getSyntacticDiagnostics` from the TypeScript compiler (bundled into `extension.js`). Syntax-only — no type resolution — so missing-import false positives are avoided entirely in documentation snippets.
+- **SQL blocks enabled by default** — `sql` added to both `format.enabledLanguages` and `diagnostics.enabledLanguages` defaults; no manual configuration required.
+
+### Changed
+
+- **JS diagnostics now use bundled ESLint** — `eslintExtensionDiagnostics.ts` no longer delegates to the `dbaeumer.vscode-eslint` extension. ESLint is fully bundled into `extension.js` via esbuild; `espree`/`acorn`/`acorn-jsx`/`eslint-visitor-keys` are shipped on disk inside the VSIX because `espree` calls `require.resolve()` at module load time.
+
+### Removed
+
+- **Dockerfile support dropped** — `DockerExtensionFormatter`, `dockerExtensionDiagnostics.ts`, and the `docker`/`dockerfile` language alias have been removed. Extension delegation to `ms-azuretools.vscode-docker` was too fragile. Dockerfile blocks are silently skipped; support may return in a future release.
+
+### Fixed
+
+- **esbuild packaging**: `eslint` removed from `devDependencies` (vsce silently excludes devDeps even when `.vscodeignore` negation rules are present); it is now in `dependencies` and bundled at build time.
+- **Tab close behaviour** in `BlackExtensionFormatter` and `ShfmtExtensionFormatter`: replaced `closeActiveEditor` with targeted `tabGroups.close()` so the user's active editor is never disturbed by background formatting operations.
+
+---
+
+### Added (previous unreleased)
+
 #### Formatting
 
 - **Shell/Bash formatting via extension delegate** — introduced `ShfmtExtensionFormatter` which delegates to the [`mkhl.shfmt`](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) VS Code extension via `vscode.executeFormatDocumentProvider`. The extension is automatically prompted for installation on first activation if not already present. Falls back to the `shfmt` CLI if the extension is unavailable.

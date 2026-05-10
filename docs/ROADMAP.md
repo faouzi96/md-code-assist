@@ -145,7 +145,7 @@ All three extensions are auto-installed on activation if not already present, an
 - [ ] "Fix all" code action for auto-fixable diagnostics
 - [ ] Telemetry (opt-in) for usage insights
 
-### Version 1.2 (Month 3)
+### Version 1.3 (Month 4)
 
 - [ ] Custom formatter plugins (user-defined formatters)
 - [ ] Markdown preview integration (show formatted blocks in preview)

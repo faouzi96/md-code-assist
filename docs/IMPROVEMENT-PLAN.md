@@ -54,13 +54,13 @@ Every missing language is a user who installs once and uninstalls.
 
 ### 4. Missing UX Features
 
-- **No status bar item** — Users have no ambient feedback that the extension is active or what it's doing. A small `$(check) Markdown Code Assistant` in the status bar would help.
+- ~~**No status bar item**~~ — **Resolved.** `StatusBarController` in `src/ui/statusBarItem.ts`.
 - **No "Format on Type"** — As users finish typing a code block fence (the closing ` ``` `), auto-formatting would feel magical.
 - **No block-level quick fixes** — When diagnostics fire, offering a "Format this block" code action (lightbulb) would be a killer feature.
 - **No diff preview** — Before applying formatting, showing a diff builds trust with cautious users.
 - **No per-block language override** — Some users want a block formatted with different config (e.g., 2-space indent JSON vs. 4-space).
-- **No "ignore block" directive** — e.g., ` ```js <!-- markdown-code-assistant-ignore --> ` to skip a block.
-- **No telemetry (opt-in)** — You can't improve what you can't measure. Optional telemetry (like `@vscode/extension-telemetry`) would show which languages are used most.
+- ~~**No "ignore block" directive**~~ — **Resolved.** `@md-assistant-ignore` in the fence info string skips the block entirely.
+- **No telemetry** — Intentionally excluded; the extension makes no outbound network connections.
 
 ### 5. Testing Gaps
 
@@ -106,6 +106,14 @@ Achieved via `prettier-plugin-sql` (pure npm package, bundled as an esbuild exte
 
 Extension delegation to `ms-azuretools.vscode-docker` proved too fragile in practice. Dockerfile support has been removed from formatters, diagnostics, language aliases, and enabled-language defaults. May be revisited in a future release.
 
+### ✅ ~~Add a Status Bar Item~~ — Resolved
+
+`StatusBarController` in `src/ui/statusBarItem.ts`. Shows `✓ Markdown Code Assist` when a Markdown editor is active, `⚠ N issues` (warning background) after diagnostics, and a transient `✓ Formatted N blocks` message for 3 s after a format operation. Hidden when no Markdown editor is active.
+
+### ✅ ~~Add an Ignore Directive~~ — Resolved
+
+`@md-assistant-ignore` in the fence info string (e.g. ` ```js @md-assistant-ignore `) skips the block entirely — no formatting, no diagnostics. Implemented by checking `Code.meta` in `codeBlockExtractor.ts`.
+
 ### 2. Add the Code Action Lightbulb
 
 When a diagnostic fires, offer "Format this block" as a quick fix. This is an extremely discoverable workflow that makes the extension feel native to VS Code. Implement via `vscode.languages.registerCodeActionsProvider`.
@@ -115,12 +123,6 @@ When a diagnostic fires, offer "Format this block" as a quick fix. This is an ex
 Both `gofmt` and `rustfmt` are bundled with their respective toolchains — always available if the user has the language installed. These communities write a **lot** of documentation with code blocks.
 
 ### 4. Set Up GitHub Actions CI
-
-Required before asking anyone to contribute. Without it, external PRs stall. A basic workflow: lint → compile → test on push/PR, targeting Windows, macOS, and Linux.
-
-### 6. Add a Status Bar Item
-
-Costs ~20 lines of code, makes the extension feel alive and trustworthy. Show the count of formatted/diagnosed blocks, or a spinner during long operations.
 
 ---
 

@@ -68,8 +68,8 @@ Markdown file (on change, debounced 500 ms)
                │
        ┌───────┴────────┐
        ▼                ▼
-DiagnosticCollection  DecorationManager
-(Problems panel)      (gutter + inline text)
+DiagnosticCollection  DecorationManager  StatusBarController
+(Problems panel)      (gutter + inline)  (status bar item)
 ```
 
 ## Module layout
@@ -77,6 +77,9 @@ DiagnosticCollection  DecorationManager
 ```
 src/
 ├── extension.ts              # activate() / deactivate() — wires everything together
+│
+├── ui/
+│   └── statusBarItem.ts      # StatusBarController — idle/issue-count/post-format states
 │
 ├── parser/
 │   ├── markdownParser.ts     # unified + remark-parse → Root AST
@@ -131,6 +134,8 @@ src/
 
 | Decision                                                               | Rationale                                                                                                                         |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `@md-assistant-ignore` meta tag in fence info string skips block entirely | Users occasionally need a block that must not be formatted (e.g. intentionally broken code for documentation); checking the remark `Code.meta` field costs nothing and avoids false negatives |
+| `jsx`/`tsx` fence labels not aliased to `javascript`/`typescript` | JSX/TSX syntax is not valid in plain JS/TS contexts; running Prettier or ESLint on JSX inside a bare `.ts` context produces false errors. Blocks are silently skipped. |
 | `shell: false` in all `spawn()` calls                                  | Prevents shell injection from formatter paths or code content                                                                     |
 | `prettier` marked external in esbuild, shipped in VSIX `node_modules/` | Prettier 3 uses `import.meta.url` in its ESM plugins; bundling it to CJS causes `fileURLToPath(undefined)` at startup             |
 | TypeScript bundled into `extension.js` via esbuild                     | The TS compiler API is used for syntax-only diagnostics; bundling avoids shipping ~50 transitive deps on disk while keeping the full parser available in-process |

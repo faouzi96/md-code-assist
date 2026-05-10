@@ -11,7 +11,27 @@ const buildOptions = {
   // external so they are NOT bundled. Their node_modules folders are shipped directly in
   // the VSIX (see .vscodeignore). This avoids Prettier 3's ESM import.meta.url usage and
   // sh-syntax's WASM file path resolution breaking when bundled to CJS.
-  external: ['vscode', 'prettier', 'prettier/*', 'prettier-plugin-sh', 'sh-syntax', 'prettier-plugin-sql'],
+  external: [
+    'vscode',
+    'prettier',
+    'prettier/*',
+    'prettier-plugin-sh',
+    'sh-syntax',
+    'prettier-plugin-sql',
+    // eslint is bundled (CJS, bundles cleanly).
+    // espree must stay external: eslint/lib/rule-tester/rule-tester.js calls
+    // require.resolve("espree") at module-load time, which requires a real
+    // file on disk. eslint-visitor-keys, acorn, acorn-jsx are espree's deps.
+    'espree',
+    'acorn',
+    'acorn-jsx',
+    'eslint-visitor-keys',
+    // @typescript-eslint/parser must stay external because its path is
+    // resolved at runtime via require.resolve() and passed to ESLint as a
+    // parser file path — it needs a real location on disk inside the VSIX.
+    // @typescript-eslint/parser removed — TypeScript diagnostics now use the
+    // bundled TypeScript compiler API (typescriptDiagnostics.ts) directly.
+  ],
   format: 'cjs',
   platform: 'node',
   target: 'node20',

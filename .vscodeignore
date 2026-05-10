@@ -2,6 +2,14 @@ node_modules/**
 !node_modules/prettier/**
 !node_modules/prettier-plugin-sh/**
 !node_modules/sh-syntax/**
+!node_modules/espree/**
+!node_modules/acorn/**
+!node_modules/acorn-jsx/**
+!node_modules/eslint-visitor-keys/**
+!node_modules/prettier-plugin-sql/**
+!node_modules/node-sql-parser/**
+!node_modules/moo/**
+!node_modules/nearley/**
 out/
 src/
 test/

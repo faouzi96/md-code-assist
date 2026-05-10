@@ -5,6 +5,7 @@ import type { CodeBlock } from '../../../src/parser/types';
 function makeBlock(contentStartLine: number): CodeBlock {
   return {
     language: 'typescript',
+    rawLanguage: 'typescript',
     content: 'const x: string = 1;',
     startLine: contentStartLine - 1,
     endLine: contentStartLine + 1,
@@ -41,12 +42,12 @@ describe('mapDiagnostic', () => {
     expect(mapped.range.start.line).toBe(7);
   });
 
-  it('sets source to MD Code Assist when original has no source', () => {
+  it('sets source to Markdown Code Assistant when original has no source', () => {
     const block = makeBlock(0);
     const range = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1));
     const original = new vscode.Diagnostic(range, 'msg', vscode.DiagnosticSeverity.Hint);
 
     const mapped = mapDiagnostic(original, block);
-    expect(mapped.source).toBe('MD Code Assist');
+    expect(mapped.source).toBe('Markdown Code Assistant');
   });
 });

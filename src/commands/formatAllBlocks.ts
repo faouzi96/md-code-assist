@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { extractCodeBlocks } from '../parser';
 import { dispatchFormat } from '../formatters/formatterDispatcher';
 import { Logger } from '../utils/logger';
+import type { StatusBarController } from '../ui/statusBarItem';
 
 export interface FormatSummary {
   edits: vscode.TextEdit[];
@@ -90,7 +91,7 @@ export async function formatDocument(
 }
 
 /** VS Code command handler — applies edits directly via WorkspaceEdit. */
-export async function formatAllBlocksCommand(): Promise<void> {
+export async function formatAllBlocksCommand(statusBar?: StatusBarController): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'markdown') {
     void vscode.window.showWarningMessage(
@@ -130,6 +131,8 @@ export async function formatAllBlocksCommand(): Promise<void> {
   const workspaceEdit = new vscode.WorkspaceEdit();
   workspaceEdit.set(editor.document.uri, summary.edits);
   await vscode.workspace.applyEdit(workspaceEdit);
+
+  statusBar?.setFormatDone(summary.formattedCount);
 
   void vscode.window.showInformationMessage(
     `Markdown Code Assistant: Formatted ${summary.formattedCount} block(s).` +

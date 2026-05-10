@@ -17,9 +17,11 @@ import {
   ensureShfmtExtension,
 } from './formatters/shfmtExtensionFormatter';
 import { ensureShellCheckExtension } from './diagnostics/shellCheckExtensionDiagnostics';
+import { StatusBarController } from './ui/statusBarItem';
 
 let diagnosticProvider: DiagnosticProvider | undefined;
 let decorationManager: DecorationManager | undefined;
+let statusBar: StatusBarController | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   Logger.initialize(context);
@@ -61,9 +63,22 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   decorationManager = new DecorationManager();
-  diagnosticProvider = new DiagnosticProvider(decorationManager);
+  statusBar = new StatusBarController();
+  diagnosticProvider = new DiagnosticProvider(decorationManager, statusBar);
 
-  registerCommands(context, diagnosticProvider);
+  // Show status bar only when a Markdown editor is active
+  if (vscode.window.activeTextEditor?.document.languageId === 'markdown') {
+    statusBar.show();
+  }
+  const onEditorChangeListener = vscode.window.onDidChangeActiveTextEditor((editor) => {
+    if (editor?.document.languageId === 'markdown') {
+      statusBar?.show();
+    } else {
+      statusBar?.hide();
+    }
+  });
+
+  registerCommands(context, diagnosticProvider, statusBar);
 
   // DocumentFormattingEditProvider — delegates to formatAllBlocks
   const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider(
@@ -118,7 +133,9 @@ export function activate(context: vscode.ExtensionContext): void {
     onChangeListener,
     onSaveListener,
     onCloseListener,
+    onEditorChangeListener,
     decorationManager,
+    statusBar,
   );
 }
 

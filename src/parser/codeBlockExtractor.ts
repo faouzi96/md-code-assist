@@ -35,6 +35,12 @@ export function extractCodeBlocks(markdownText: string): CodeBlock[] {
       return;
     }
 
+    // Honour the md-assistant-ignore directive: ```js md-assistant-ignore skips this block.
+    const meta = node.meta ?? '';
+    if (meta.split(/\s+/).includes('md-assistant-ignore')) {
+      return;
+    }
+
     // remark positions are 1-based; convert to 0-based for VS Code
     const startLine = pos.start.line - 1;
     const endLine = pos.end.line - 1;

@@ -2,13 +2,17 @@ import * as vscode from 'vscode';
 import { formatAllBlocksCommand } from './formatAllBlocks';
 import { formatCurrentBlockCommand } from './formatCurrentBlock';
 import type { DiagnosticProvider } from '../diagnostics/diagnosticProvider';
+import type { StatusBarController } from '../ui/statusBarItem';
 
 export function registerCommands(
   context: vscode.ExtensionContext,
   provider: DiagnosticProvider,
+  statusBar: StatusBarController,
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('mdCodeAssist.formatAllBlocks', formatAllBlocksCommand),
+    vscode.commands.registerCommand('mdCodeAssist.formatAllBlocks', () =>
+      formatAllBlocksCommand(statusBar),
+    ),
     vscode.commands.registerCommand('mdCodeAssist.formatCurrentBlock', formatCurrentBlockCommand),
 
     vscode.commands.registerCommand('mdCodeAssist.showDiagnostics', () => {

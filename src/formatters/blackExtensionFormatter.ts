@@ -30,10 +30,7 @@ export class BlackExtensionFormatter implements IFormatter {
 
       // Replace entire document content with the block code.
       await editor.edit((eb) => {
-        const fullRange = new vscode.Range(
-          doc.positionAt(0),
-          doc.positionAt(doc.getText().length),
-        );
+        const fullRange = new vscode.Range(doc.positionAt(0), doc.positionAt(doc.getText().length));
         eb.replace(fullRange, code);
       });
 
@@ -45,7 +42,7 @@ export class BlackExtensionFormatter implements IFormatter {
       );
 
       // Close the temporary document without saving.
-      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await closeTempDocByUri(uri);
 
       if (!edits || edits.length === 0) {
         // No edits means already formatted or Black returned nothing — treat as success.
@@ -64,13 +61,24 @@ export class BlackExtensionFormatter implements IFormatter {
   }
 }
 
+/** Close a specific temp document by URI without disturbing the active editor. */
+async function closeTempDocByUri(uri: vscode.Uri): Promise<void> {
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      if (tab.input instanceof vscode.TabInputText && tab.input.uri.toString() === uri.toString()) {
+        await vscode.window.tabGroups.close(tab, true);
+        return;
+      }
+    }
+  }
+}
+
 /**
  * Manually apply an array of TextEdits to a string.
  * Edits are applied from bottom to top to preserve offset validity.
  */
 function applyEdits(original: string, edits: vscode.TextEdit[]): string {
   const lines = original.split('\n');
-
   // Sort edits from last to first so earlier offsets stay valid.
   const sorted = [...edits].sort((a, b) => {
     if (b.range.start.line !== a.range.start.line) {
@@ -85,11 +93,13 @@ function applyEdits(original: string, edits: vscode.TextEdit[]): string {
     const endLine = edit.range.end.line;
     const endChar = edit.range.end.character;
 
-    const before = lines.slice(0, startLine).join('\n') +
+    const before =
+      lines.slice(0, startLine).join('\n') +
       (startLine > 0 ? '\n' : '') +
       (lines[startLine] ?? '').slice(0, startChar);
 
-    const after = (lines[endLine] ?? '').slice(endChar) +
+    const after =
+      (lines[endLine] ?? '').slice(endChar) +
       (endLine < lines.length - 1 ? '\n' : '') +
       lines.slice(endLine + 1).join('\n');
 

@@ -35,6 +35,7 @@ export function getSettings(): ExtensionSettings {
         'shell',
         'graphql',
         'markdown',
+        'sql',
       ],
     },
     diagnostics: {
@@ -47,6 +48,7 @@ export function getSettings(): ExtensionSettings {
         'css',
         'html',
         'shell',
+        'sql',
       ],
       severityLevel:
         config.get<'error' | 'warning' | 'info' | 'hint'>('diagnostics.severityLevel') ?? 'warning',

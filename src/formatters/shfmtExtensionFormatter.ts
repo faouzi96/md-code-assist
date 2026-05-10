@@ -42,7 +42,7 @@ export class ShfmtExtensionFormatter implements IFormatter {
       );
 
       // Close the temporary document without saving.
-      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      await closeTempDocByUri(uri);
 
       if (!edits || edits.length === 0) {
         return { success: true, formatted: code };
@@ -55,6 +55,18 @@ export class ShfmtExtensionFormatter implements IFormatter {
       const message = err instanceof Error ? err.message : String(err);
       Logger.warn(`shfmt extension formatter failed: ${message}`);
       return { success: false, error: message };
+    }
+  }
+}
+
+/** Close a specific temp document by URI without disturbing the active editor. */
+async function closeTempDocByUri(uri: vscode.Uri): Promise<void> {
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      if (tab.input instanceof vscode.TabInputText && tab.input.uri.toString() === uri.toString()) {
+        await vscode.window.tabGroups.close(tab, true);
+        return;
+      }
     }
   }
 }

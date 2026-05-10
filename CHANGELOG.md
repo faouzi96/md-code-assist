@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to MD Code Assist will be documented in this file.
+All notable changes to Markdown Code Assistant will be documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -12,12 +12,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 #### Formatting
 
-- **Shell/Bash/Zsh formatting** (bundled, no install required) via [`prettier-plugin-sh`](https://github.com/un-ts/prettier/tree/master/packages/sh), replacing the deprecated `mvdan-sh` package. Shell blocks (`sh`, `bash`, `zsh`, `shell`) are now formatted by the Prettier pipeline with zero external dependencies.
+- **Shell/Bash formatting via extension delegate** — introduced `ShfmtExtensionFormatter` which delegates to the [`mkhl.shfmt`](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) VS Code extension via `vscode.executeFormatDocumentProvider`. The extension is automatically prompted for installation on first activation if not already present. Falls back to the `shfmt` CLI if the extension is unavailable.
+- **Shell/Bash/Zsh formatting** (bundled fallback, no install required) via [`prettier-plugin-sh`](https://github.com/un-ts/prettier/tree/master/packages/sh), replacing the deprecated `mvdan-sh` package. Shell blocks (`sh`, `bash`, `zsh`, `shell`) are formatted by the Prettier pipeline with zero external dependencies.
 - **Python formatting via extension delegate** — introduced `BlackExtensionFormatter` which delegates to the [`ms-python.black-formatter`](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) VS Code extension via `vscode.executeFormatDocumentProvider`. The extension is automatically prompted for installation on first activation if not already present.
+- **`ensureShfmtExtension()`** utility that silently installs `mkhl.shfmt` in the background on extension activation.
 - **`ensureBlackExtension()`** utility that silently installs `ms-python.black-formatter` in the background on extension activation.
 
 #### Diagnostics
 
+- **Shell diagnostics via extension delegate** — introduced `ShellCheckExtensionDiagnostics` which delegates to the [`timonwong.shellcheck`](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) VS Code extension. No system `shellcheck` install required. SC2148 (missing shebang) is suppressed as a false positive for inline snippets.
+- **`ensureShellCheckExtension()`** utility that silently installs `timonwong.shellcheck` in the background on extension activation.
+- **Shell diagnostic priority chain**: ShellCheck extension → `shellcheck` CLI → `prettier-plugin-sh` parse errors (bundled fallback).
 - **YAML diagnostics** (bundled) — syntax errors reported with line/column via `js-yaml`'s `YAMLException`.
 - **CSS diagnostics** (bundled) — syntax errors reported with line/column via `postcss` `CssSyntaxError`.
 - **HTML diagnostics** (bundled) — structural parse errors reported via `parse5`'s `onParseError` callback.
@@ -73,7 +78,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Jest + ts-jest test suite with manual VS Code API mock.
 - GitHub Actions CI matrix across Ubuntu, macOS, and Windows.
 - Automatic `.vsix` artifact upload on push to `main`; marketplace publish on version tags (`v*`).
-- `MD Code Assist` output channel for structured diagnostic and error logging.
+- `Markdown Code Assistant` output channel for structured diagnostic and error logging.
 
 [Unreleased]: https://github.com/md-code-assist/md-code-assist/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/md-code-assist/md-code-assist/releases/tag/v0.1.0

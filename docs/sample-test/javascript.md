@@ -1,7 +1,7 @@
 # JavaScript & JSX — Formatter Test
 
-Open this file with MD Code Assist installed, then press `Shift+Alt+F` to format all blocks,
-or place your cursor inside a block and run **MD Code Assist: Format Current Code Block**.
+Open this file with Markdown Code Assistant installed, then press `Shift+Alt+F` to format all blocks,
+or place your cursor inside a block and run **Markdown Code Assistant: Format Current Code Block**.
 
 ---
 
@@ -9,7 +9,7 @@ or place your cursor inside a block and run **MD Code Assist: Format Current Cod
 
 ```js
 const greet = (name) => {
-  return 'Hello, ' + name + '!';
+  return "Hello, " + name + "!";
 };
 
 const numbers = [1, 2, 3, 4, 5];
@@ -23,7 +23,7 @@ if (doubled.length > 0) {
 ## Formatting — arrow functions and objects
 
 ```javascript
-const config = { host: 'localhost', port: 3000, debug: true, timeout: 5000 };
+const config = { host: "localhost", port: 3000, debug: true, timeout: 5000 };
 
 async function fetchData(url, options) {
   const response = await fetch(url, options);
@@ -31,9 +31,9 @@ async function fetchData(url, options) {
   return data;
 }
 
-fetchData('https://api.example.com/users', {
-  method: 'GET',
-  headers: { 'Content-Type': 'application/json' },
+fetchData("https://api.example.com/users", {
+  method: "GET",
+  headers: { "Content-Type": "application/json" },
 })
   .then((data) => console.log(data))
   .catch((err) => console.error(err));
@@ -61,8 +61,8 @@ const Button = ({ label, onClick }) => (
 
 const App = () => (
   <div className="app">
-    <Button label="Click me" onClick={() => console.log('clicked')} />
-    <Button label="Reset" onClick={() => console.log('reset')} />
+    <Button label="Click me" onClick={() => console.log("clicked")} />
+    <Button label="Reset" onClick={() => console.log("reset")} />
   </div>
 );
 ```

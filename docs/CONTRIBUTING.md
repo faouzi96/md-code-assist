@@ -13,15 +13,15 @@ Press **F5** in VS Code to open the Extension Development Host with the extensio
 ## Development commands
 
 ```bash
-npm run compile      # Type-check without emitting (fast feedback)
-npm run build        # Build the extension bundle (esbuild)
-npm run watch        # Watch mode — rebuilds on every save
-npm test             # Run the full test suite
-npm run test:watch   # Tests in watch mode
-npm run lint         # ESLint
-npm run lint:fix     # Auto-fix lint issues
-npm run format       # Format source files with Prettier
-npm run package      # Package as .vsix
+npm run compile    # Type-check without emitting (fast feedback)
+npm run build      # Build the extension bundle (esbuild)
+npm run watch      # Watch mode — rebuilds on every save
+npm test           # Run the full test suite
+npm run test:watch # Tests in watch mode
+npm run lint       # ESLint
+npm run lint:fix   # Auto-fix lint issues
+npm run format     # Format source files with Prettier
+npm run package    # Package as .vsix
 ```
 
 ## Code style
@@ -46,7 +46,7 @@ There are two patterns to choose from:
 **Pattern B — CLI / extension delegate**
 - Implement `IFormatter` from `src/formatters/types.ts`.
 - For CLI tools: use `spawn()` via `src/utils/cliRunner.ts` with `shell: false`; read the path from `options.executablePath ?? this.executablePath`.
-- For VS Code extension delegation (see `BlackExtensionFormatter`): open an untitled doc, call `vscode.commands.executeCommand('vscode.executeFormatDocumentProvider', ...)`, apply the resulting `TextEdit[]`.
+- For VS Code extension delegation (see `BlackExtensionFormatter` and `ShfmtExtensionFormatter`): open an untitled doc with the appropriate extension (`.py`, `.sh`), call `vscode.commands.executeCommand('vscode.executeFormatDocumentProvider', ...)`, apply the resulting `TextEdit[]`. Add an `ensureXxxExtension()` helper that auto-installs the extension on activation and call it from `activate()` in `src/extension.ts`.
 
 **Common steps for both patterns:**
 1. Register the formatter in `activate()` in `src/extension.ts` via `formatterRegistry.register(new MyFormatter())`. Registration order matters — later registrations win for overlapping languages.
@@ -58,9 +58,10 @@ There are two patterns to choose from:
 ## Adding a new diagnostic checker
 
 1. Add a case to `diagnoseBlock()` in `src/diagnostics/cliDiagnostics.ts`.
-2. Return `vscode.Diagnostic[]` in block-relative line coordinates (line 0 = first content line).
-3. The mapper in `src/diagnostics/diagnosticMapper.ts` will shift positions to the Markdown document automatically.
-4. Add the language to the `mdCodeAssist.diagnostics.enabledLanguages` default in `package.json`.
+2. For VS Code extension-backed diagnostics (see `shellCheckExtensionDiagnostics.ts`): open an untitled document, subscribe to `vscode.languages.onDidChangeDiagnostics`, edit the content, await the extension's response, then close the document. Suppress any diagnostic codes that are false positives for inline snippets.
+3. Return `vscode.Diagnostic[]` in block-relative line coordinates (line 0 = first content line).
+4. The mapper in `src/diagnostics/diagnosticMapper.ts` will shift positions to the Markdown document automatically.
+5. Add the language to the `mdCodeAssist.diagnostics.enabledLanguages` default in `package.json`.
 
 ## Writing tests
 

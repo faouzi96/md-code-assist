@@ -1,4 +1,4 @@
-# MD Code Assist — Improvement Plan & Gap Analysis
+# Markdown Code Assistant — Improvement Plan & Gap Analysis
 
 ## Current State Assessment
 
@@ -16,7 +16,7 @@ The architecture is solid and well-thought-out. The pipeline (parse → extract 
 
 ### 2. Zero-Friction First Run
 
-- Users must install Black and shfmt separately for Python and Shell. This is a friction wall — most users won't bother. The roadmap already plans WASM formatters (v1.1), but this **must happen before any serious push for installs**.
+- Users must install Black and shfmt separately for Python and Shell **only if** the VS Code extension delegates (`ms-python.black-formatter`, `mkhl.shfmt`, `timonwong.shellcheck`) are unavailable. These extensions are now auto-installed on activation, eliminating the friction wall for most users.
 - The `node --check` diagnostic for JS/TS is very limited — no linting, no type errors. It only catches parse errors. Users will expect ESLint-level feedback.
 
 ### 3. Missing Languages (High Demand)
@@ -37,7 +37,7 @@ Every missing language is a user who installs once and uninstalls.
 
 ### 4. Missing UX Features
 
-- **No status bar item** — Users have no ambient feedback that the extension is active or what it's doing. A small `$(check) MD Code Assist` in the status bar would help.
+- **No status bar item** — Users have no ambient feedback that the extension is active or what it's doing. A small `$(check) Markdown Code Assistant` in the status bar would help.
 - **No "Format on Type"** — As users finish typing a code block fence (the closing ` ``` `), auto-formatting would feel magical.
 - **No block-level quick fixes** — When diagnostics fire, offering a "Format this block" code action (lightbulb) would be a killer feature.
 - **No diff preview** — Before applying formatting, showing a diff builds trust with cautious users.

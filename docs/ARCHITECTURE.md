@@ -23,11 +23,12 @@ Markdown file
 └──────┬──────┬───────┘
        │      │
        ▼      ▼
-  Prettier          Black CLI    shfmt CLI   BlackExtension
-  (Node API +       (stdin)      (stdin)     (VS Code extension
-   plugin-sh WASM)                            delegate via API)
-       │                │            │              │
-       └────────────────┴────────────┴──────────────┘
+  Prettier          Black CLI    shfmt CLI   BlackExtension  ShfmtExtension
+  (Node API +       (stdin)      (stdin)     (ms-python.     (mkhl.shfmt
+   plugin-sh WASM)                            black-formatter) extension
+                                              extension        delegate)
+       │                │            │              │               │
+       └────────────────┴────────────┴──────────────┴───────────────┘
            │ formatted code string
            ▼
 ┌─────────────────────┐
@@ -50,7 +51,7 @@ Markdown file (on change, debounced 500 ms)
 ┌──────────────────────────────┐
 │  CLI Diagnostics             │  node --check (JS/TS)
 │                              │  python -m py_compile (Python)
-│                              │  shellcheck --format=json (Shell, with fallback)
+│                              │  ShellCheck extension → shellcheck CLI → prettier-plugin-sh (Shell)
 │                              │  JSON.parse (JSON)
 │                              │  js-yaml (YAML, bundled)
 │                              │  PostCSS (CSS, bundled)
@@ -86,8 +87,9 @@ src/
 │   ├── formatterRegistry.ts  # Language-to-formatter map + LANGUAGE_ALIASES
 │   ├── prettierFormatter.ts        # Prettier Node API + prettier-plugin-sh (shell)
 │   ├── blackFormatter.ts          # Black CLI via stdin
-│   ├── shfmtFormatter.ts          # shfmt CLI via stdin (optional)
+│   ├── shfmtFormatter.ts          # shfmt CLI via stdin (fallback)
 │   ├── blackExtensionFormatter.ts # Python via ms-python.black-formatter extension
+│   ├── shfmtExtensionFormatter.ts # Shell via mkhl.shfmt extension
 │   ├── formatterDispatcher.ts# Routes a CodeBlock to the right formatter
 │   └── index.ts
 │
@@ -99,6 +101,7 @@ src/
 ├── diagnostics/
 │   ├── types.ts              # MappedDiagnostic, VirtualDocument
 │   ├── cliDiagnostics.ts     # Per-language CLI check runners
+│   ├── shellCheckExtensionDiagnostics.ts # Shell diagnostics via timonwong.shellcheck extension
 │   ├── diagnosticMapper.ts   # Map relative → absolute positions
 │   ├── diagnosticProvider.ts # Orchestrates refresh / refreshBlock
 │   └── index.ts
@@ -117,7 +120,7 @@ src/
     ├── cliRunner.ts          # spawn() wrapper — shell:false, stdin pipe, timeout
     ├── toolDetector.ts       # isToolAvailable() with session-level cache
     ├── positionMapping.ts    # Offset ↔ line/char conversions
-    └── logger.ts             # "MD Code Assist" output channel
+    └── logger.ts             # "Markdown Code Assistant" output channel
 ```
 
 ## Key design decisions
@@ -132,5 +135,6 @@ src/
 | CLI-based diagnostics (not virtual documents + LSP)                    | Virtual documents on a custom URI scheme cannot receive language-server diagnostics; VS Code only provides them for real files    |
 | `FormatSummary` returned from `formatDocument`                         | Allows the command to show specific feedback (already formatted / skipped / formatted N) instead of a generic "nothing to format" |
 | `prettier-plugin-sh` (WASM) instead of `mvdan-sh`                     | `mvdan-sh` is deprecated; `prettier-plugin-sh` is the maintained replacement and integrates directly with the Prettier pipeline   |
+| `ShfmtExtensionFormatter` delegates to `mkhl.shfmt`              | Avoids requiring a system `shfmt` install; the extension bundles the binary and integrates with VS Code's formatter pipeline |
 | `BlackExtensionFormatter` delegates to `ms-python.black-formatter`     | Avoids bundling a Python runtime; the extension is auto-installed and provides a proper VS Code `TextEdit[]` response             |
 | In-process YAML/CSS/HTML diagnostics via js-yaml/PostCSS/parse5       | These parsers throw structured errors with line/column; no external CLI needed for baseline syntax checking                       |

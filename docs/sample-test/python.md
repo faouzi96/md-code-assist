@@ -1,7 +1,7 @@
-# Python — Formatter Test (requires Black)
+# Python — Formatter + Diagnostics Test
 
-Press `Shift+Alt+F` to format all blocks. Black must be installed (`pip install black`).
-Check **View → Output → MD Code Assist** if blocks are skipped.
+Press `Shift+Alt+F` to format all blocks. Formatting uses the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed, no system Python needed for formatting). Diagnostics use `python -m py_compile` and require a Python runtime.
+Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 
 ---
 

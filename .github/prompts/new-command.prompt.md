@@ -11,6 +11,7 @@ Your goal is to scaffold a new VS Code command for md-code-assist.
 ## Required Information
 
 Ask the user for:
+
 1. **Command name** (e.g., "formatCurrentBlock")
 2. **Command title** (shown in Command Palette, e.g., "Format Current Code Block")
 3. **Description** of what the command does
@@ -20,7 +21,9 @@ Ask the user for:
 ## Tasks
 
 ### 1. Create Command Handler
+
 Create `src/commands/<commandName>.ts`:
+
 ```typescript
 import * as vscode from 'vscode';
 
@@ -36,17 +39,21 @@ export async function <commandName>(context: vscode.ExtensionContext): Promise<v
 ```
 
 ### 2. Register in package.json
+
 Add to `contributes.commands`:
+
 ```json
 {
   "command": "mdCodeAssist.<commandName>",
   "title": "<Command Title>",
-  "category": "MD Code Assist"
+  "category": "Markdown Code Assistant"
 }
 ```
 
 ### 3. Add Keybinding (if provided)
+
 Add to `contributes.keybindings`:
+
 ```json
 {
   "command": "mdCodeAssist.<commandName>",
@@ -56,7 +63,9 @@ Add to `contributes.keybindings`:
 ```
 
 ### 4. Register in Extension Entry Point
+
 Update `src/extension.ts`:
+
 ```typescript
 import { <commandName> } from './commands/<commandName>';
 
@@ -71,7 +80,9 @@ export function activate(context: vscode.ExtensionContext) {
 ```
 
 ### 5. Add Menu Contribution (optional)
+
 For editor context menu, add to `contributes.menus`:
+
 ```json
 "editor/context": [
   {
@@ -83,6 +94,7 @@ For editor context menu, add to `contributes.menus`:
 ```
 
 ### 6. Create Test
+
 Create `test/commands/<commandName>.test.ts`.
 
 ## Checklist

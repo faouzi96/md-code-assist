@@ -1,15 +1,17 @@
-﻿# MD Code Assist
+﻿# Markdown Code Assistant
 
 **Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.**
 
-MD Code Assist treats the code examples inside your `.md` files as first-class citizens — routing them through the same formatters you use for standalone source files, and surfacing errors directly in the Markdown editor.
+Markdown Code Assistant treats the code examples inside your `.md` files as first-class citizens — routing them through the same formatters you use for standalone source files, and surfacing errors directly in the Markdown editor.
 
 ---
 
 ## Features
 
-- **Format code blocks** — sends each fenced block through Prettier, prettier-plugin-sh, or Black and writes the result back, leaving all surrounding Markdown untouched.
+- **Format code blocks** — sends each fenced block through Prettier, Black, or shfmt and writes the result back, leaving all surrounding Markdown untouched.
 - **Inline diagnostics** — runs syntax and lint checks on code blocks and maps errors back to their exact lines in the Markdown file (Problems panel + gutter icons + inline text).
+- **Zero-install shell support** — shell/bash formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
+- **Zero-install Python formatting** — delegates to the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed). Python itself is not required for formatting.
 - **Format on Save** — optional auto-format whenever you save a Markdown file.
 - **Format Document** — `Shift+Alt+F` formats all code blocks via VS Code's built-in shortcut.
 - **Graceful degradation** — if a required tool is not available, the extension shows a clear message and skips those blocks without affecting others.
@@ -22,8 +24,9 @@ MD Code Assist treats the code examples inside your `.md` files as first-class c
 |-------------|-------|
 | VS Code ≥ 1.85 | |
 | Python runtime | Only for Python block **diagnostics** (`python -m py_compile`) |
-| Python + Black | Only for Python block **formatting** — installed automatically via the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension, or manually with `pip install black` |
-| [shellcheck](https://www.shellcheck.net/) | Optional — enhances Shell/Bash diagnostics (basic syntax errors work without it) |
+| [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required. |
+| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed. |
+| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed. |
 
 **Prettier, prettier-plugin-sh, js-yaml, postcss, and parse5 are all bundled — no installation required.**
 
@@ -33,7 +36,7 @@ MD Code Assist treats the code examples inside your `.md` files as first-class c
 
 ### VS Code Marketplace
 
-Search for **MD Code Assist** in the Extensions view (`Ctrl+Shift+X`).
+Search for **Markdown Code Assistant** in the Extensions view (`Ctrl+Shift+X`).
 
 ### From a `.vsix` file
 
@@ -49,10 +52,10 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 
 | Command | Description |
 |---------|-------------|
-| `MD Code Assist: Format All Code Blocks` | Format every fenced block in the file |
-| `MD Code Assist: Format Current Code Block` | Format only the block the cursor is inside |
-| `MD Code Assist: Show Code Block Diagnostics` | Run diagnostics on all blocks |
-| `MD Code Assist: Diagnose Current Code Block` | Run diagnostics on the block at cursor |
+| `Markdown Code Assistant: Format All Code Blocks` | Format every fenced block in the file |
+| `Markdown Code Assistant: Format Current Code Block` | Format only the block the cursor is inside |
+| `Markdown Code Assistant: Show Code Block Diagnostics` | Run diagnostics on all blocks |
+| `Markdown Code Assistant: Diagnose Current Code Block` | Run diagnostics on the block at cursor |
 
 ---
 
@@ -71,12 +74,23 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 | GraphQL | `graphql`, `gql` |
 | Markdown (nested) | `markdown`, `md` |
 
-### External CLI (optional)
+### VS Code Extensions (auto-installed, no system tools needed)
+
+| Language | Extension | Purpose |
+|----------|-----------|--------|
+| Python | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting |
+| Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) | Formatting |
+| Shell / Bash | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) | Diagnostics |
+
+### CLI fallbacks (optional)
+
+If the VS Code extensions above are unavailable, the extension falls back to the system CLI tools if installed:
 
 | Language | Tool | Install |
 |----------|------|---------|
 | Python | Black | `pip install black` |
 | Shell / Bash / Zsh | shfmt | `brew install shfmt` |
+| Shell / Bash | shellcheck | `brew install shellcheck` |
 
 ---
 
@@ -99,10 +113,25 @@ Example — enable all languages and format on save:
 ```jsonc
 {
   "mdCodeAssist.format.enabledLanguages": [
-    "javascript", "typescript", "python", "json", "yaml", "html", "css", "shell", "graphql"
+    "javascript",
+    "typescript",
+    "python",
+    "json",
+    "yaml",
+    "html",
+    "css",
+    "shell",
+    "graphql"
   ],
   "mdCodeAssist.diagnostics.enabledLanguages": [
-    "javascript", "typescript", "json", "yaml", "css", "html", "shell", "python"
+    "javascript",
+    "typescript",
+    "json",
+    "yaml",
+    "css",
+    "html",
+    "shell",
+    "python"
   ],
   "mdCodeAssist.formatOnSave": true
 }

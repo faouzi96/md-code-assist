@@ -1,7 +1,7 @@
-# Shell / Bash / Zsh — Formatter Test (requires shfmt)
+# Shell / Bash / Zsh — Formatter + Diagnostics Test
 
-Press `Shift+Alt+F` to format all blocks. shfmt must be installed (`brew install shfmt`).
-Check **View → Output → MD Code Assist** if blocks are skipped.
+Press `Shift+Alt+F` to format all blocks. Formatting uses the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed, no system shfmt needed). Diagnostics use [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed).
+Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 
 ---
 
@@ -31,10 +31,12 @@ log() {
 }
 
 retry() {
+
   local attempts=$1
   local delay=$2
   shift 2
   local i
+
   for i in $(seq 1 "$attempts"); do
     "$@" && return 0
     log WARN "Attempt $i/$attempts failed, retrying in ${delay}s..."

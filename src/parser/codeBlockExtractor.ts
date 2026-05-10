@@ -5,9 +5,7 @@ import type { CodeBlock } from './types';
 // Language aliases are defined here (not imported from formatters) to avoid a circular dependency.
 const LANGUAGE_ALIASES: ReadonlyMap<string, string> = new Map([
   ['js', 'javascript'],
-  ['jsx', 'javascript'],
   ['ts', 'typescript'],
-  ['tsx', 'typescript'],
   ['py', 'python'],
   ['python3', 'python'],
   ['sh', 'shell'],

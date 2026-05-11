@@ -14,6 +14,7 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 - **Ignore directive** — add `@md-assistant-ignore` to any fence's info string to exclude that block from formatting and diagnostics entirely (e.g. ` ```js @md-assistant-ignore `).
 - **Zero-install shell support** — shell/bash formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
 - **Zero-install Python formatting** — delegates to the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed). Python itself is not required for formatting.
+- **Deep Python diagnostics** — if the [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) extension is installed it catches undefined names, unreachable code, and more; falls back to `pyflakes` CLI, then `py_compile` for syntax-only checks.
 - **SQL formatting + diagnostics** — `prettier-plugin-sql` is bundled; SQL blocks are formatted in-process and parse errors are surfaced as diagnostics. No external tools required.
 - **Format on Save** — optional auto-format whenever you save a Markdown file.
 - **Format Document** — `Shift+Alt+F` formats all code blocks via VS Code's built-in shortcut.
@@ -23,13 +24,14 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 
 ## Requirements
 
-| Requirement | Notes |
-|-------------|-------|
-| VS Code ≥ 1.85 | |
-| Python runtime | Only for Python block **diagnostics** (`python -m py_compile`) |
-| [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required. |
-| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed. |
-| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed. |
+| Requirement                                                                                                | Notes                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| VS Code ≥ 1.85                                                                                             |                                                                                                       |
+| Python runtime                                                                                             | Only for Python block **diagnostics** fallback (`pyflakes` / `py_compile`)                            |
+| [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required.              |
+| [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)               | Python **diagnostics** (preferred) — deep checks including undefined names. Optional but recommended. |
+| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed.                   |
+| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed.             |
 
 **Prettier, prettier-plugin-sh, prettier-plugin-sql, js-yaml, postcss, parse5, ESLint, and the TypeScript compiler are all bundled — no installation required.**
 
@@ -53,12 +55,12 @@ code --install-extension md-code-assist-0.1.0.vsix
 
 Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 
-| Command | Description |
-|---------|-------------|
-| `Markdown Code Assistant: Format All Code Blocks` | Format every fenced block in the file |
-| `Markdown Code Assistant: Format Current Code Block` | Format only the block the cursor is inside |
-| `Markdown Code Assistant: Show Code Block Diagnostics` | Run diagnostics on all blocks |
-| `Markdown Code Assistant: Diagnose Current Code Block` | Run diagnostics on the block at cursor |
+| Command                                                | Description                                |
+| ------------------------------------------------------ | ------------------------------------------ |
+| `Markdown Code Assistant: Format All Code Blocks`      | Format every fenced block in the file      |
+| `Markdown Code Assistant: Format Current Code Block`   | Format only the block the cursor is inside |
+| `Markdown Code Assistant: Show Code Block Diagnostics` | Run diagnostics on all blocks              |
+| `Markdown Code Assistant: Diagnose Current Code Block` | Run diagnostics on the block at cursor     |
 
 ---
 
@@ -66,34 +68,37 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 
 ### Prettier (bundled)
 
-| Language | Fence labels |
-|----------|-------------|
-| JavaScript | `js`, `javascript` |
-| TypeScript | `ts`, `typescript` |
-| JSON / JSONC | `json`, `jsonc` |
-| YAML | `yaml`, `yml` |
-| HTML | `html` |
+| Language          | Fence labels          |
+| ----------------- | --------------------- |
+| JavaScript        | `js`, `javascript`    |
+| TypeScript        | `ts`, `typescript`    |
+| JSON / JSONC      | `json`, `jsonc`       |
+| YAML              | `yaml`, `yml`         |
+| HTML              | `html`                |
 | CSS / SCSS / Less | `css`, `scss`, `less` |
-| GraphQL | `graphql`, `gql` |
-| Markdown (nested) | `markdown`, `md` |
-| SQL | `sql` |
+| GraphQL           | `graphql`, `gql`      |
+| Markdown (nested) | `markdown`, `md`      |
+| SQL               | `sql`                 |
+
 ### VS Code Extensions (auto-installed, no system tools needed)
 
-| Language | Extension | Purpose |
-|----------|-----------|--------|
-| Python | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting |
-| Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) | Formatting |
-| Shell / Bash | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) | Diagnostics |
+| Language           | Extension                                                                                                  | Purpose                 |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Python             | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting              |
+| Python             | [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)               | Diagnostics (preferred) |
+| Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Formatting              |
+| Shell / Bash       | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Diagnostics             |
 
 ### CLI fallbacks (optional)
 
 If the VS Code extensions above are unavailable, the extension falls back to the system CLI tools if installed:
 
-| Language | Tool | Install |
-|----------|------|---------|
-| Python | Black | `pip install black` |
-| Shell / Bash / Zsh | shfmt | `brew install shfmt` |
-| Shell / Bash | shellcheck | `brew install shellcheck` |
+| Language           | Tool       | Purpose                       | Install                   |
+| ------------------ | ---------- | ----------------------------- | ------------------------- |
+| Python             | pyflakes   | Diagnostics (undefined names) | `pip install pyflakes`    |
+| Python             | Black      | Formatting                    | `pip install black`       |
+| Shell / Bash / Zsh | shfmt      | Formatting                    | `brew install shfmt`      |
+| Shell / Bash       | shellcheck | Diagnostics                   | `brew install shellcheck` |
 
 ---
 
@@ -101,15 +106,15 @@ If the VS Code extensions above are unavailable, the extension falls back to the
 
 All settings are under `mdCodeAssist.*` and can be set at User, Workspace, or Folder scope.
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `format.enabledLanguages` | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown","sql"]` | Languages to format |
-| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell","sql"]` | Languages to diagnose |
-| `formatters.blackPath` | `"black"` | Path to Black CLI executable (fallback) |
-| `formatters.shfmtPath` | `"shfmt"` | Path to shfmt CLI executable (fallback) |
-| `decorations.showGutterIcons` | `true` | Colored gutter icons for diagnostics |
-| `decorations.showInlineErrors` | `true` | Inline error text after affected lines |
-| `formatOnSave` | `false` | Auto-format all blocks on save |
+| Setting                        | Default                                                                                              | Description                             |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `format.enabledLanguages`      | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown","sql"]` | Languages to format                     |
+| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell","sql"]`                      | Languages to diagnose                   |
+| `formatters.blackPath`         | `"black"`                                                                                            | Path to Black CLI executable (fallback) |
+| `formatters.shfmtPath`         | `"shfmt"`                                                                                            | Path to shfmt CLI executable (fallback) |
+| `decorations.showGutterIcons`  | `true`                                                                                               | Colored gutter icons for diagnostics    |
+| `decorations.showInlineErrors` | `true`                                                                                               | Inline error text after affected lines  |
+| `formatOnSave`                 | `false`                                                                                              | Auto-format all blocks on save          |
 
 > **Tip:** Prefix any fence with `@md-assistant-ignore` to permanently exclude a block from all processing: ` ```python @md-assistant-ignore `
 
@@ -127,7 +132,7 @@ Example — enable all languages and format on save:
     "css",
     "shell",
     "graphql",
-    "sql"
+    "sql",
   ],
   "mdCodeAssist.diagnostics.enabledLanguages": [
     "javascript",
@@ -138,9 +143,9 @@ Example — enable all languages and format on save:
     "html",
     "shell",
     "python",
-    "sql"
+    "sql",
   ],
-  "mdCodeAssist.formatOnSave": true
+  "mdCodeAssist.formatOnSave": true,
 }
 ```
 

@@ -14,7 +14,6 @@ import {
   diagnoseShellBlockWithExtension,
 } from './shellCheckExtensionDiagnostics';
 import { diagnoseJsBlock } from './eslintExtensionDiagnostics';
-import { diagnoseTypescriptBlock } from './typescriptDiagnostics';
 import { Parser as SqlParser } from 'node-sql-parser';
 
 /**
@@ -26,7 +25,7 @@ export async function diagnoseBlock(block: CodeBlock): Promise<vscode.Diagnostic
     case 'javascript':
       return runNodeCheck(block);
     case 'typescript':
-      return Promise.resolve(diagnoseTypescriptBlock(block));
+      return runNodeCheck(block); // type-stripped via ts.transpileModule() in diagnoseJsBlock
     case 'python':
       return runPyCompile(block);
     case 'shell':
@@ -85,6 +84,21 @@ async function runPyCompile(block: CodeBlock): Promise<vscode.Diagnostic[]> {
     return [];
   }
 
+  // 2. Try pyflakes — catches undefined names without needing imports to resolve.
+  if (await isToolAvailable('pyflakes')) {
+    const tmpFile = writeTempFile(block.content, '.py');
+    try {
+      const result = await runCli('pyflakes', [tmpFile]);
+      // pyflakes exits 1 when issues are found — that is expected
+      return parsePyflakesErrors(result.stdout || result.stderr);
+    } catch (err) {
+      Logger.warn(`pyflakes failed: ${String(err)}`);
+    } finally {
+      deleteTempFile(tmpFile);
+    }
+  }
+
+  // 3. Last resort: py_compile for syntax errors only.
   const tmpFile = writeTempFile(block.content, '.py');
   try {
     const result = await runCli(pythonCmd, ['-m', 'py_compile', tmpFile]);
@@ -98,6 +112,35 @@ async function runPyCompile(block: CodeBlock): Promise<vscode.Diagnostic[]> {
   } finally {
     deleteTempFile(tmpFile);
   }
+}
+
+/**
+ * Parse `pyflakes` output.
+ * Format: 'filename.py:line:col: message'
+ */
+function parsePyflakesErrors(output: string): vscode.Diagnostic[] {
+  const diags: vscode.Diagnostic[] = [];
+  for (const raw of output.split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    // Format: path:line:col: message
+    const m = /^[^:]+:(\d+):(\d+):\s+(.+)$/.exec(line);
+    if (m) {
+      const lineNum = Math.max(0, parseInt(m[1], 10) - 1);
+      const col = Math.max(0, parseInt(m[2], 10) - 1);
+      const range = new vscode.Range(lineNum, col, lineNum, Number.MAX_SAFE_INTEGER);
+      diags.push(new vscode.Diagnostic(range, m[3], vscode.DiagnosticSeverity.Warning));
+    } else {
+      // Some messages omit the column: path:line: message
+      const m2 = /^[^:]+:(\d+):\s+(.+)$/.exec(line);
+      if (m2) {
+        const lineNum = Math.max(0, parseInt(m2[1], 10) - 1);
+        const range = new vscode.Range(lineNum, 0, lineNum, Number.MAX_SAFE_INTEGER);
+        diags.push(new vscode.Diagnostic(range, m2[2], vscode.DiagnosticSeverity.Warning));
+      }
+    }
+  }
+  return diags;
 }
 
 /**

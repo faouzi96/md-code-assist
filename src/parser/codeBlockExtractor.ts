@@ -5,9 +5,7 @@ import type { CodeBlock } from './types';
 // Language aliases are defined here (not imported from formatters) to avoid a circular dependency.
 const LANGUAGE_ALIASES: ReadonlyMap<string, string> = new Map([
   ['js', 'javascript'],
-  ['jsx', 'javascript'],
   ['ts', 'typescript'],
-  ['tsx', 'typescript'],
   ['py', 'python'],
   ['python3', 'python'],
   ['sh', 'shell'],
@@ -32,6 +30,12 @@ export function extractCodeBlocks(markdownText: string): CodeBlock[] {
   visit(root, 'code', (node: Code) => {
     const pos = node.position;
     if (!pos) {
+      return;
+    }
+
+    // Honour the @md-assistant-ignore directive: ```js @md-assistant-ignore skips this block.
+    const meta = node.meta ?? '';
+    if (meta.split(/\s+/).includes('@md-assistant-ignore')) {
       return;
     }
 

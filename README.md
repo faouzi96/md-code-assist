@@ -10,6 +10,8 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 
 - **Format code blocks** — sends each fenced block through Prettier, Black, or shfmt and writes the result back, leaving all surrounding Markdown untouched.
 - **Inline diagnostics** — runs syntax and lint checks on code blocks and maps errors back to their exact lines in the Markdown file (Problems panel + gutter icons + inline text).
+- **Status bar item** — a `✓ Markdown Code Assist` indicator in the status bar shows when a Markdown file is active, transitions to `⚠ N issues` when diagnostics find problems, and briefly shows `✓ Formatted N blocks` after a format operation.
+- **Ignore directive** — add `@md-assistant-ignore` to any fence's info string to exclude that block from formatting and diagnostics entirely (e.g. ` ```js @md-assistant-ignore `).
 - **Zero-install shell support** — shell/bash formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
 - **Zero-install Python formatting** — delegates to the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed). Python itself is not required for formatting.
 - **SQL formatting + diagnostics** — `prettier-plugin-sql` is bundled; SQL blocks are formatted in-process and parse errors are surfaced as diagnostics. No external tools required.
@@ -66,8 +68,8 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 
 | Language | Fence labels |
 |----------|-------------|
-| JavaScript | `js`, `jsx`, `javascript` |
-| TypeScript | `ts`, `tsx`, `typescript` |
+| JavaScript | `js`, `javascript` |
+| TypeScript | `ts`, `typescript` |
 | JSON / JSONC | `json`, `jsonc` |
 | YAML | `yaml`, `yml` |
 | HTML | `html` |
@@ -108,6 +110,8 @@ All settings are under `mdCodeAssist.*` and can be set at User, Workspace, or Fo
 | `decorations.showGutterIcons` | `true` | Colored gutter icons for diagnostics |
 | `decorations.showInlineErrors` | `true` | Inline error text after affected lines |
 | `formatOnSave` | `false` | Auto-format all blocks on save |
+
+> **Tip:** Prefix any fence with `@md-assistant-ignore` to permanently exclude a block from all processing: ` ```python @md-assistant-ignore `
 
 Example — enable all languages and format on save:
 

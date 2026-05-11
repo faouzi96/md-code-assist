@@ -6,9 +6,7 @@ import type { IFormatter } from './types';
  */
 export const LANGUAGE_ALIASES: ReadonlyMap<string, string> = new Map([
   ['js', 'javascript'],
-  ['jsx', 'javascript'],
   ['ts', 'typescript'],
-  ['tsx', 'typescript'],
   ['py', 'python'],
   ['python3', 'python'],
   ['sh', 'shell'],

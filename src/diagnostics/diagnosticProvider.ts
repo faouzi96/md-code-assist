@@ -5,14 +5,17 @@ import { DecorationManager } from '../decorations/decorationManager';
 import { getSettings } from '../config/settings';
 import { Logger } from '../utils/logger';
 import { diagnoseBlock } from './cliDiagnostics';
+import type { StatusBarController } from '../ui/statusBarItem';
 
 export class DiagnosticProvider {
   private readonly collection: vscode.DiagnosticCollection;
   private readonly decorationManager: DecorationManager;
+  private readonly statusBar: StatusBarController | undefined;
 
-  constructor(decorationManager: DecorationManager) {
+  constructor(decorationManager: DecorationManager, statusBar?: StatusBarController) {
     this.collection = vscode.languages.createDiagnosticCollection('Markdown Code Assistant');
     this.decorationManager = decorationManager;
+    this.statusBar = statusBar;
   }
 
   /** Run diagnostics on all eligible code blocks in the document. */
@@ -40,6 +43,7 @@ export class DiagnosticProvider {
 
     this.collection.set(document.uri, allDiags);
     this.updateDecorations(document, allDiags);
+    this.statusBar?.setDiagnosticCount(allDiags.length);
     Logger.info(`Diagnostics: ${allDiags.length} issue(s) in ${document.fileName}`);
   }
 

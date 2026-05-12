@@ -52,15 +52,15 @@ After several approaches (see below), the following combination works:
 
 ## Key Technical Facts
 
-| Area | Detail |
-|------|--------|
-| esbuild bundling | `typescript` compiler is bundled into `dist/extension.js`. `prettier`, `espree`, `eslint`, `@astral-sh/ruff-wasm-nodejs` are external (shipped in VSIX `node_modules/`). |
-| `ts.transpileModule()` | Pure in-memory, no host/lib needed. Works reliably in bundled VSIX. |
-| `getSemanticDiagnostics()` | Needs TypeScript lib files from disk — not available in bundled VSIX. Abandoned. |
-| Ruff WASM `Workspace.check()` | Returns 1-based `{row, column}` positions. Converted to 0-based VS Code ranges. |
-| ShellCheck temp file URI | `vscode.Uri.joinPath(vscode.Uri.file(os.tmpdir()), tmpName)`. Normalized via `normalizeUri()` for Windows drive-letter consistency. |
-| `onDidChangeDiagnostics` debounce | 400 ms debounce / 8 s hard cap. Listener subscribed **before** `openTextDocument`. |
-| CRLF normalization | `.replace(/\r\n/g, '\n')` before writing temp file — Windows line endings caused ShellCheck SC1017. |
+| Area                              | Detail                                                                                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| esbuild bundling                  | `typescript` compiler is bundled into `dist/extension.js`. `prettier`, `espree`, `eslint`, `@astral-sh/ruff-wasm-nodejs` are external (shipped in VSIX `node_modules/`). |
+| `ts.transpileModule()`            | Pure in-memory, no host/lib needed. Works reliably in bundled VSIX.                                                                                                      |
+| `getSemanticDiagnostics()`        | Needs TypeScript lib files from disk — not available in bundled VSIX. Abandoned.                                                                                         |
+| Ruff WASM `Workspace.check()`     | Returns 1-based `{row, column}` positions. Converted to 0-based VS Code ranges.                                                                                          |
+| ShellCheck temp file URI          | `vscode.Uri.joinPath(vscode.Uri.file(os.tmpdir()), tmpName)`. Normalized via `normalizeUri()` for Windows drive-letter consistency.                                      |
+| `onDidChangeDiagnostics` debounce | 400 ms debounce / 8 s hard cap. Listener subscribed **before** `openTextDocument`.                                                                                       |
+| CRLF normalization                | `.replace(/\r\n/g, '\n')` before writing temp file — Windows line endings caused ShellCheck SC1017.                                                                      |
 
 ---
 

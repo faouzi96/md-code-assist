@@ -51,7 +51,7 @@ Markdown file (on change, debounced 500 ms)
 ┌──────────────────────────────┐
 │  CLI Diagnostics             │  ESLint/espree (JS — includes `no-undef` for undeclared names)
 │                              │  TypeScript compiler API (TS — semantic diagnostics with DOM+ES2022 libs, filtered false positives)
-│                              │  Ruff extension → pyflakes CLI → python -m py_compile (Python)
+│                              │  Ruff WASM (in-process) → pyflakes CLI → python -m py_compile (Python)
 │                              │  ShellCheck extension → shellcheck CLI → prettier-plugin-sh (Shell)
 │                              │  JSON.parse (JSON)
 │                              │  js-yaml (YAML, bundled)
@@ -108,8 +108,8 @@ src/
 │   ├── cliDiagnostics.ts     # Per-language check runners
 │   ├── eslintExtensionDiagnostics.ts # JS diagnostics via bundled ESLint/espree
 │   ├── typescriptDiagnostics.ts      # TS diagnostics via bundled TypeScript compiler API (semantic, filtered)
-│   ├── shellCheckExtensionDiagnostics.ts # Shell diagnostics via timonwong.shellcheck extension
-│   ├── ruffExtensionDiagnostics.ts   # Python diagnostics via charliermarsh.ruff extension
+│   ├── shellCheckExtensionDiagnostics.ts # Shell diagnostics via timonwong.shellcheck extension (temp file + debounce)
+│   ├── ruffWasmDiagnostics.ts        # Python diagnostics via @astral-sh/ruff-wasm-nodejs (in-process, bundled)
 │   ├── diagnosticMapper.ts   # Map relative → absolute positions
 │   ├── diagnosticProvider.ts # Orchestrates refresh / refreshBlock
 │   └── index.ts
@@ -142,7 +142,8 @@ src/
 | TypeScript bundled into `extension.js` via esbuild                                  | The TS compiler API is used for semantic diagnostics with DOM+ES2022 lib files served from the bundled TypeScript package; bundling avoids shipping ~50 transitive deps on disk while keeping the full type checker available in-process                 |
 | TS semantic diagnostics with suppressed isolation codes                             | `getSemanticDiagnostics()` is used instead of `getSyntacticDiagnostics()` so undeclared local names (e.g. typos) are caught; codes 2307/2580/2591/etc. are suppressed because they fire only due to missing imports/ambient context in isolated snippets |
 | `no-undef` ESLint rule enabled for JS snippets                                      | Safe because `env: { browser, node, es2022 }` already covers all standard globals; only truly undeclared local names (typos, missing declarations) fire                                                                                                  |
-| `RuffExtensionDiagnostics` mirrors `ShellCheckExtensionDiagnostics`                 | Ruff is the fastest Python linter and catches F821 (undefined name) without needing imports to resolve; `F401` (unused import) is suppressed as a false positive in snippets that intentionally omit consuming code                                      |
+| `ruffWasmDiagnostics` uses `@astral-sh/ruff-wasm-nodejs`                            | Ruff WASM runs fully in-process — no extension delegation or system install needed. `F401`/`E401` are suppressed as false positives in snippets. Marked as esbuild external and whitelisted in `.vscodeignore` so the WASM file path resolves correctly. |
+| `ShellCheckExtensionDiagnostics` uses a temp file + debounce                        | ShellCheck extension activates lazily, so `isActive` is always `false` from Markdown context. A temp `.sh`/`.bash` file is written (with CRLF normalised), the extension is activated explicitly, and diagnostics are collected via a 400 ms debounced `onDidChangeDiagnostics` listener with an 8 s hard cap. |
 | ESLint bundled into `extension.js`; `espree` shipped as an external                 | `espree` uses `require.resolve()` at load time, which requires a real file on disk; all other ESLint internals bundle cleanly to CJS                                                                                                                     |
 | Language aliases duplicated in `parser/` and `formatters/`                          | Avoids a circular import between the two layers                                                                                                                                                                                                          |
 | 0-based positions internally                                                        | Matches VS Code API; remark's 1-based positions are converted on extraction                                                                                                                                                                              |

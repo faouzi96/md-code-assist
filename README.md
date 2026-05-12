@@ -14,7 +14,7 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 - **Ignore directive** — add `@md-assistant-ignore` to any fence's info string to exclude that block from formatting and diagnostics entirely (e.g. ` ```js @md-assistant-ignore `).
 - **Zero-install shell support** — shell/bash formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
 - **Zero-install Python formatting** — delegates to the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed). Python itself is not required for formatting.
-- **Deep Python diagnostics** — if the [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) extension is installed it catches undefined names, unreachable code, and more; falls back to `pyflakes` CLI, then `py_compile` for syntax-only checks.
+- **Deep Python diagnostics** — Ruff runs fully in-process via `@astral-sh/ruff-wasm-nodejs` (bundled, no install required). Catches undefined names, unreachable code, style issues, and more. Falls back to `pyflakes` CLI, then `py_compile` if WASM fails.
 - **SQL formatting + diagnostics** — `prettier-plugin-sql` is bundled; SQL blocks are formatted in-process and parse errors are surfaced as diagnostics. No external tools required.
 - **Format on Save** — optional auto-format whenever you save a Markdown file.
 - **Format Document** — `Shift+Alt+F` formats all code blocks via VS Code's built-in shortcut.
@@ -27,13 +27,12 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 | Requirement                                                                                                | Notes                                                                                                 |
 | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | VS Code ≥ 1.85                                                                                             |                                                                                                       |
-| Python runtime                                                                                             | Only for Python block **diagnostics** fallback (`pyflakes` / `py_compile`)                            |
-| [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required.              |
-| [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)               | Python **diagnostics** (preferred) — deep checks including undefined names. Optional but recommended. |
-| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed.                   |
-| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed.             |
+| Python runtime                                                                                             | Only for Python block **diagnostics** fallback (`pyflakes` / `py_compile`) — not needed when Ruff WASM runs |
+| [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required.                     |
+| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed.                          |
+| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed.                    |
 
-**Prettier, prettier-plugin-sh, prettier-plugin-sql, js-yaml, postcss, parse5, ESLint, and the TypeScript compiler are all bundled — no installation required.**
+**Prettier, prettier-plugin-sh, prettier-plugin-sql, js-yaml, postcss, parse5, ESLint, the TypeScript compiler, and `@astral-sh/ruff-wasm-nodejs` are all bundled — no installation required.**
 
 ---
 
@@ -84,10 +83,9 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 
 | Language           | Extension                                                                                                  | Purpose                 |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------- |
-| Python             | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting              |
-| Python             | [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)               | Diagnostics (preferred) |
-| Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Formatting              |
-| Shell / Bash       | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Diagnostics             |
+| Python             | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting  |
+| Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Formatting  |
+| Shell / Bash       | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Diagnostics |
 
 ### CLI fallbacks (optional)
 

@@ -10,12 +10,12 @@ Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 ```sh
 #!/bin/sh
 NAME=$1
-if [ -z "$NAME" ]; then
+if [ -z "$NAMsE" ]; then
   echo "Usage: $0 <name>"
   exit 1
 
 fi
-echo "Hello, $NAME!"
+echo "Hello, $NAME"
 ```
 
 ## Formatting — bash functions
@@ -97,8 +97,8 @@ echo "Version: $VERSION ($COMMIT)"
 
 ## Formatting — zsh-specific features
 
-```zsh
-#!/usr/bin/env zsh
+```sh
+#!/usr/bin/env sh
 setopt ERR_EXIT PIPE_FAIL NO_UNSET
 
 autoload -U colors && colors

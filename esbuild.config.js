@@ -18,6 +18,9 @@ const buildOptions = {
     'prettier-plugin-sh',
     'sh-syntax',
     'prettier-plugin-sql',
+    // @astral-sh/ruff-wasm-nodejs loads a .wasm file via a relative path at
+    // runtime — bundling breaks that path resolution (same issue as sh-syntax).
+    '@astral-sh/ruff-wasm-nodejs',
     // eslint is bundled (CJS, bundles cleanly).
     // espree must stay external: eslint/lib/rule-tester/rule-tester.js calls
     // require.resolve("espree") at module-load time, which requires a real

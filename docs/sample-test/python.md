@@ -1,6 +1,6 @@
 # Python — Formatter + Diagnostics Test
 
-Press `Shift+Alt+F` to format all blocks. Formatting uses the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed, no system Python needed for formatting). Diagnostics use `python -m py_compile` and require a Python runtime.
+Press `Shift+Alt+F` to format all blocks. Formatting uses the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed, no system Python needed for formatting). Diagnostics use [charliermarsh.ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) (preferred, catches undefined names), then `pyflakes` CLI, then `python -m py_compile` as last resort.
 Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 
 ---
@@ -10,7 +10,7 @@ Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 ```python
 def   greet(name,greeting='Hello'):
     return   greeting+', '+name+'!'
-x=greet('Alice');
+x=greet('Alice' )
 y=greet('Bob',greeting='Hi')
 print(x,y)
 ```
@@ -20,8 +20,8 @@ print(x,y)
 ```python
 class Animal:
   def __init__(self,name,species):
-            self.name=name
-            self.species=species
+      self.name=name
+      self.species=species
   def speak(self):
     raise NotImplementedError
   def __repr__(self):
@@ -97,6 +97,14 @@ def broken(x, y):
     if x == y:
         print("equal")
     return x + y
+```
+
+## Undefined name — for diagnostics testing (Ruff/pyflakes should report `result` not defined)
+
+```python
+def compute(x, y):
+    total = x + y
+    return reslt  # typo: should be 'total'
 ```
 
 ```python

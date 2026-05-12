@@ -14,6 +14,7 @@ import {
   diagnoseShellBlockWithExtension,
 } from './shellCheckExtensionDiagnostics';
 import { diagnoseJsBlock } from './eslintExtensionDiagnostics';
+import { diagnosePythonBlockWithRuffWasm } from './ruffWasmDiagnostics';
 import { Parser as SqlParser } from 'node-sql-parser';
 
 /**
@@ -79,6 +80,15 @@ function runNodeCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
 // ---------------------------------------------------------------------------
 
 async function runPyCompile(block: CodeBlock): Promise<vscode.Diagnostic[]> {
+  // 1. Ruff WASM — runs fully in-process, no system install required.
+  //    Catches undefined names, style issues, and more.
+  //    Falls back to pyflakes/py_compile only if Ruff throws unexpectedly.
+  try {
+    return diagnosePythonBlockWithRuffWasm(block);
+  } catch {
+    // Ruff WASM failed (unlikely) — fall through to CLI tools.
+  }
+
   const pythonCmd = (await isToolAvailable('python3')) ? 'python3' : 'python';
   if (!(await isToolAvailable(pythonCmd))) {
     return [];

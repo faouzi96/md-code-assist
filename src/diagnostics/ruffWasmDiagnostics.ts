@@ -23,7 +23,7 @@ let ruffWorkspace: import('@astral-sh/ruff-wasm-nodejs').Workspace | undefined;
 
 function getRuffWorkspace(): import('@astral-sh/ruff-wasm-nodejs').Workspace {
   if (!ruffWorkspace) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const { Workspace } =
       require('@astral-sh/ruff-wasm-nodejs') as typeof import('@astral-sh/ruff-wasm-nodejs');
     ruffWorkspace = new Workspace({});

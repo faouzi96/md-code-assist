@@ -102,5 +102,26 @@ const vscode = {
 
 (vscode.window as unknown as Record<string, unknown>)['createTextEditorDecorationType'] =
   vscode.window_createTextEditorDecorationType;
+(vscode.window as unknown as Record<string, unknown>)['createStatusBarItem'] = jest.fn(() => ({
+  text: '',
+  backgroundColor: undefined,
+  command: '',
+  tooltip: '',
+  show: jest.fn(),
+  hide: jest.fn(),
+  dispose: jest.fn(),
+}));
+(vscode.window as unknown as Record<string, unknown>)['onDidChangeActiveTextEditor'] = jest.fn(
+  () => ({ dispose: jest.fn() }),
+);
+
+(vscode as unknown as Record<string, unknown>)['ThemeColor'] = jest.fn((id: string) => ({ id }));
+(vscode as unknown as Record<string, unknown>)['StatusBarAlignment'] = { Left: 1, Right: 2 };
+(vscode as unknown as Record<string, unknown>)['extensions'] = {
+  getExtension: jest.fn(() => undefined),
+  all: [],
+  onDidChange: jest.fn(() => ({ dispose: jest.fn() })),
+};
+(vscode as unknown as Record<string, unknown>)['TabInputText'] = jest.fn();
 
 module.exports = vscode;

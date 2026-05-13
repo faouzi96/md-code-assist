@@ -104,19 +104,47 @@ If the VS Code extensions above are unavailable, the extension falls back to the
 
 All settings are under `mdCodeAssist.*` and can be set at User, Workspace, or Folder scope.
 
-| Setting                        | Default                                                                                              | Description                             |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| `format.enabledLanguages`      | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown","sql"]` | Languages to format                     |
-| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell","sql"]`                      | Languages to diagnose                   |
-| `formatters.blackPath`         | `"black"`                                                                                            | Path to Black CLI executable (fallback) |
-| `formatters.shfmtPath`         | `"shfmt"`                                                                                            | Path to shfmt CLI executable (fallback) |
-| `decorations.showGutterIcons`  | `true`                                                                                               | Colored gutter icons for diagnostics    |
-| `decorations.showInlineErrors` | `true`                                                                                               | Inline error text after affected lines  |
-| `formatOnSave`                 | `false`                                                                                              | Auto-format all blocks on save          |
+| Setting                        | Default                                                                                              | Description                                       |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `format.enabledLanguages`      | `["javascript","typescript","python","json","yaml","html","css","shell","graphql","markdown","sql"]` | Languages to format                               |
+| `format.triggerMode`           | `"onCommand"`                                                                                        | When to format: `onCommand`, `onSave`, `onType`   |
+| `diagnostics.enabledLanguages` | `["javascript","typescript","python","json","yaml","css","html","shell","sql"]`                      | Languages to diagnose                             |
+| `diagnostics.triggerMode`      | `"onCommand"`                                                                                        | When to diagnose: `onCommand`, `onSave`, `onType` |
+| `formatters.blackPath`         | `"black"`                                                                                            | Path to Black CLI executable (fallback)           |
+| `formatters.shfmtPath`         | `"shfmt"`                                                                                            | Path to shfmt CLI executable (fallback)           |
+| `decorations.showGutterIcons`  | `true`                                                                                               | Colored gutter icons for diagnostics              |
+| `decorations.showInlineErrors` | `true`                                                                                               | Inline error text after affected lines            |
+
+### Trigger modes
+
+| Mode          | Behavior                                                                              |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `"onCommand"` | **Default.** Nothing runs automatically — you call the command when you want results. |
+| `"onSave"`    | Runs every time you save the Markdown file.                                           |
+| `"onType"`    | Watch mode — runs continuously as you edit (debounced 500 ms).                        |
 
 > **Tip:** Prefix any fence with `@md-assistant-ignore` to permanently exclude a block from all processing: ` ```python @md-assistant-ignore `
 
-Example — enable all languages and format on save:
+Example — format and diagnose on save:
+
+```jsonc
+{
+  // Format and diagnose every time the file is saved
+  "mdCodeAssist.format.triggerMode": "onSave",
+  "mdCodeAssist.diagnostics.triggerMode": "onSave",
+}
+```
+
+Example — watch mode (format and diagnose as you type):
+
+```jsonc
+{
+  "mdCodeAssist.format.triggerMode": "onType",
+  "mdCodeAssist.diagnostics.triggerMode": "onType",
+}
+```
+
+Example — full custom setup:
 
 ```jsonc
 {
@@ -143,7 +171,8 @@ Example — enable all languages and format on save:
     "python",
     "sql",
   ],
-  "mdCodeAssist.formatOnSave": true,
+  "mdCodeAssist.format.triggerMode": "onSave",
+  "mdCodeAssist.diagnostics.triggerMode": "onSave",
 }
 ```
 

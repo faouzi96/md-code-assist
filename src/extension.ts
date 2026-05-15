@@ -96,7 +96,7 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
-  // Debounced diagnostics on document change
+  // Debounced on-change listener — fires only when watch mode (onType) is active
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   const onChangeListener = vscode.workspace.onDidChangeTextDocument((e) => {
     if (e.document.languageId !== 'markdown') {
@@ -106,18 +106,27 @@ export function activate(context: vscode.ExtensionContext): void {
       clearTimeout(debounceTimer);
     }
     debounceTimer = setTimeout(() => {
-      void diagnosticProvider?.refresh(e.document);
+      const config = vscode.workspace.getConfiguration('mdCodeAssist');
+      if (config.get<string>('diagnostics.triggerMode') === 'onType') {
+        void diagnosticProvider?.refresh(e.document);
+      }
+      if (config.get<string>('format.triggerMode') === 'onType') {
+        void vscode.commands.executeCommand('mdCodeAssist.formatAllBlocks');
+      }
     }, 500);
   });
 
-  // Format on save
+  // On-save listener — fires format and/or diagnostics when their triggerMode is 'onSave'
   const onSaveListener = vscode.workspace.onDidSaveTextDocument((document) => {
     if (document.languageId !== 'markdown') {
       return;
     }
     const config = vscode.workspace.getConfiguration('mdCodeAssist');
-    if (config.get<boolean>('formatOnSave')) {
+    if (config.get<string>('format.triggerMode') === 'onSave') {
       void vscode.commands.executeCommand('mdCodeAssist.formatAllBlocks');
+    }
+    if (config.get<string>('diagnostics.triggerMode') === 'onSave') {
+      void diagnosticProvider?.refresh(document);
     }
   });
 

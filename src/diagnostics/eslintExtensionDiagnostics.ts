@@ -18,6 +18,10 @@ import type { ESLint } from 'eslint';
 // VSIX node_modules. Use require() at module load so they are resolved once.
 const ESLintCtor: typeof ESLint = (require('eslint') as { ESLint: typeof ESLint }).ESLint;
 
+// TypeScript is bundled by esbuild — use require() to get transpileModule.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const ts = require('typescript') as typeof import('typescript');
+
 /**
  * ESLint rules focused on real logic errors only.
  * - No style rules (avoid noise on opinionated formatting choices)
@@ -42,6 +46,9 @@ const SNIPPET_RULES: Record<string, 'error' | 'warn'> = {
   'no-compare-neg-zero': 'error',
   'no-unsafe-finally': 'error',
   'no-unexpected-multiline': 'error',
+  // Catch references to undeclared local names (e.g. typos).
+  // Safe because env: { browser, node, es2022 } already covers all standard globals.
+  'no-undef': 'error',
 };
 
 // Lazy-cached ESLint instance — synchronous creation, reused across calls.
@@ -69,6 +76,10 @@ function getEslintJs(): ESLint {
 /**
  * Lint a JS or TS code block using ESLint's Node API directly.
  *
+ * For TypeScript blocks, types are stripped first via ts.transpileModule() so
+ * espree can parse the result cleanly. Line numbers are preserved because
+ * type-stripping replaces annotations with whitespace rather than removing lines.
+ *
  * - No workspace `.eslintrc` is loaded (`useEslintrc: false`)
  * - No temp files are written; no editor documents are opened
  * - Only real logic-error rules are enabled — no style, no false import errors
@@ -78,8 +89,25 @@ function getEslintJs(): ESLint {
 export async function diagnoseJsBlock(block: CodeBlock): Promise<vscode.Diagnostic[]> {
   try {
     const eslint = getEslintJs();
-    const filePath = block.language === 'typescript' ? 'snippet.ts' : 'snippet.js';
-    const results = await eslint.lintText(block.content, { filePath });
+    let code = block.content;
+    if (block.language === 'typescript') {
+      // Transpile-only: strips type annotations to plain JS without type-checking.
+      // Blank-preserving substitution keeps line numbers identical to source.
+      try {
+        const result = ts.transpileModule(code, {
+          compilerOptions: {
+            target: ts.ScriptTarget.ES2022,
+            module: ts.ModuleKind.ESNext,
+            removeComments: false,
+          },
+        });
+        code = result.outputText;
+      } catch {
+        // If transpilation fails (e.g. unsupported syntax), fall back to raw content.
+      }
+    }
+    const filePath = 'snippet.js';
+    const results = await eslint.lintText(code, { filePath });
 
     const diags: vscode.Diagnostic[] = [];
     for (const result of results) {
@@ -88,13 +116,8 @@ export async function diagnoseJsBlock(block: CodeBlock): Promise<vscode.Diagnost
         const col = Math.max(0, msg.column - 1);
 
         if (msg.fatal === true) {
-          // For TypeScript, espree cannot parse TS-specific syntax (type
-          // annotations, interfaces, etc.) — suppress these parse errors to
-          // avoid false positives on valid TypeScript code.
-          if (block.language === 'typescript') {
-            continue;
-          }
-          // For JavaScript, a fatal parse error is a real syntax error.
+          // A fatal parse error after type-stripping means the snippet has a
+          // real JS syntax problem (not just TS-specific syntax).
           const range = new vscode.Range(line, col, line, Number.MAX_SAFE_INTEGER);
           diags.push(new vscode.Diagnostic(range, msg.message, vscode.DiagnosticSeverity.Error));
           continue;

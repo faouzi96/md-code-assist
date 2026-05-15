@@ -127,10 +127,35 @@
           "default": true,
           "description": "Show inline error text after problematic lines."
         },
-        "mdCodeAssist.formatOnSave": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically format all code blocks when saving a Markdown file."
+        "mdCodeAssist.format.triggerMode": {
+          "type": "string",
+          "enum": [
+            "onCommand",
+            "onSave",
+            "onType"
+          ],
+          "enumDescriptions": [
+            "Format only when a Format command is explicitly run (default).",
+            "Format every time the Markdown file is saved.",
+            "Format automatically as you type (debounced, watch mode)."
+          ],
+          "default": "onCommand",
+          "description": "When to run formatting on code blocks."
+        },
+        "mdCodeAssist.diagnostics.triggerMode": {
+          "type": "string",
+          "enum": [
+            "onCommand",
+            "onSave",
+            "onType"
+          ],
+          "enumDescriptions": [
+            "Diagnose only when the Show Diagnostics command is explicitly run (default).",
+            "Diagnose every time the Markdown file is saved.",
+            "Diagnose automatically as you type (debounced, watch mode)."
+          ],
+          "default": "onCommand",
+          "description": "When to run diagnostics on code blocks."
         }
       }
     }
@@ -150,6 +175,7 @@
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
+    "@astral-sh/ruff-wasm-nodejs": "^0.15.12",
     "@types/node-sql-parser": "^1.0.0",
     "eslint": "^8.57.0",
     "js-yaml": "^4.1.1",

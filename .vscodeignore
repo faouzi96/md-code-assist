@@ -10,6 +10,7 @@ node_modules/**
 !node_modules/node-sql-parser/**
 !node_modules/moo/**
 !node_modules/nearley/**
+!node_modules/@astral-sh/ruff-wasm-nodejs/**
 out/
 src/
 test/

@@ -1,6 +1,6 @@
 ﻿# Markdown Code Assistant
 
-[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/md-code-assist.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=md-code-assist.md-code-assist) [![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/md-code-assist.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=md-code-assist.md-code-assist) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Faouzi96.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=Faouzi96.md-code-assist) [![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Faouzi96.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=Faouzi96.md-code-assist) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.**
 

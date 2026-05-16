@@ -3,7 +3,7 @@
   "displayName": "Markdown Code Assistant",
   "description": "Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.",
   "version": "0.1.0",
-  "publisher": "md-code-assist",
+  "publisher": "Faouzi96",
   "private": true,
   "license": "MIT",
   "categories": [

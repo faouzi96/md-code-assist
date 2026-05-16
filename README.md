@@ -2,7 +2,7 @@
 
 **Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.**
 
-![Markdown Code Assistant in action](https://raw.githubusercontent.com/faouzi96/md-code-assist/main/images/Screenshot.png)
+![Markdown Code Assistant in action](images/Screenshot.png)
 
 Markdown Code Assistant treats the code examples inside your `.md` files as first-class citizens — routing them through the same formatters you use for standalone source files, and surfacing errors directly in the Markdown editor.
 

@@ -1,8 +1,10 @@
 ﻿# Markdown Code Assistant
 
+[![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/md-code-assist.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=md-code-assist.md-code-assist) [![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/md-code-assist.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=md-code-assist.md-code-assist) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **Language-aware formatting and inline diagnostics for fenced code blocks in Markdown files.**
 
-![Markdown Code Assistant in action](images/Screenshot.png)
+![Screenshot](https://raw.githubusercontent.com/faouzi96/md-code-assist/main/media/screenshot.png)
 
 Markdown Code Assistant treats the code examples inside your `.md` files as first-class citizens — routing them through the same formatters you use for standalone source files, and surfacing errors directly in the Markdown editor.
 

@@ -20,16 +20,16 @@
     "black",
     "shfmt"
   ],
-  "icon": "images/icon.png",
+  "icon": "media/icon.png",
   "screenshots": [
     {
-      "path": "images/Screenshot.png",
-      "url": "https://raw.githubusercontent.com/faouzi96/md-code-assist/main/images/Screenshot.png"
+      "path": "media/screenshot.png",
+      "url": "https://raw.githubusercontent.com/faouzi96/md-code-assist/main/media/screenshot.png"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/md-code-assist/md-code-assist"
+    "url": "https://github.com/faouzi96/md-code-assist"
   },
   "engines": {
     "vscode": "^1.85.0"

@@ -21,6 +21,12 @@
     "shfmt"
   ],
   "icon": "images/icon.png",
+  "screenshots": [
+    {
+      "path": "images/Screenshot.png",
+      "url": "https://raw.githubusercontent.com/faouzi96/md-code-assist/main/images/Screenshot.png"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/md-code-assist/md-code-assist"

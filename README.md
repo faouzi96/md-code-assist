@@ -1,4 +1,4 @@
-﻿# Markdown Code Assistant
+# Markdown Code Assistant
 
 [![VS Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/Faouzi96.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=Faouzi96.md-code-assist) [![VS Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Faouzi96.md-code-assist)](https://marketplace.visualstudio.com/items?itemName=Faouzi96.md-code-assist) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 

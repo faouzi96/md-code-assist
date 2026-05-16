@@ -1,8 +1,18 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import type { IFormatter, FormatOptions, FormatResult } from './types';
 import { Logger } from '../utils/logger';
 
 const BLACK_EXTENSION_ID = 'ms-python.black-formatter';
+
+/**
+ * Serializes concurrent format() calls — each uses its own temp file so
+ * correctness isn't affected by parallel execution, but serializing avoids
+ * spawning many Black LSP requests simultaneously on format-on-save.
+ */
+let pendingFormat: Promise<unknown> = Promise.resolve();
 
 /**
  * Formats Python code by delegating to the ms-python.black-formatter VS Code extension.
@@ -12,40 +22,42 @@ export class BlackExtensionFormatter implements IFormatter {
   readonly supportedLanguages: readonly string[] = ['python'];
 
   isAvailable(): Promise<boolean> {
-    // Check installed only — Black activates lazily when a Python file is opened,
-    // so isActive is false when diagnosing from a Markdown context.
-    // We activate it on demand inside format() before calling the format provider.
     const ext = vscode.extensions.getExtension(BLACK_EXTENSION_ID);
     return Promise.resolve(ext !== undefined);
   }
 
-  async format(code: string, _options: FormatOptions): Promise<FormatResult> {
+  format(code: string, _options: FormatOptions): Promise<FormatResult> {
+    const queued = pendingFormat.then(() => this._doFormat(code));
+    pendingFormat = queued.catch(() => {});
+    return queued;
+  }
+
+  private async _doFormat(code: string): Promise<FormatResult> {
+    // Write to a unique temp .py file so Black’s LSP server gets a real file URI.
+    // Using a fresh file each call avoids WorkspaceEdit (which navigates to the
+    // file) and avoids reusing a single document (which could show stale content).
+    const tmpPath = path.join(os.tmpdir(), `__mdca_py_${Date.now()}.py`);
     try {
-      // Activate the extension if it is installed but not yet active.
-      // Black registers its DocumentFormattingEditProvider only after activation.
       const ext = vscode.extensions.getExtension(BLACK_EXTENSION_ID);
       if (ext && !ext.isActive) {
         await ext.activate();
       }
 
-      // Open an in-memory Python document with the block content.
-      // Using openTextDocument with content+language avoids opening a visible editor
-      // tab that would flash open and then close on every format-on-save trigger.
-      const doc = await vscode.workspace.openTextDocument({ content: code, language: 'python' });
+      fs.writeFileSync(tmpPath, code, 'utf8');
+      const uri = vscode.Uri.file(tmpPath);
+      // openTextDocument opens the file in VS Code’s model without creating a
+      // visible tab (no showTextDocument call — file stays invisible to the user).
+      await vscode.workspace.openTextDocument(uri);
 
-      // Ask VS Code to run the document formatter (Black extension hooks here).
       const edits = await vscode.commands.executeCommand<vscode.TextEdit[]>(
         'vscode.executeFormatDocumentProvider',
-        doc.uri,
+        uri,
         { insertSpaces: true, tabSize: 4 },
       );
 
       if (!edits || edits.length === 0) {
-        // No edits means already formatted or Black returned nothing — treat as success.
         return { success: true, formatted: code };
       }
-
-      // Apply edits to reconstruct the formatted text.
       const formatted = applyEdits(code, edits);
       const trimmed = formatted.endsWith('\n') ? formatted.slice(0, -1) : formatted;
       return { success: true, formatted: trimmed };
@@ -53,6 +65,14 @@ export class BlackExtensionFormatter implements IFormatter {
       const message = err instanceof Error ? err.message : String(err);
       Logger.warn(`Black extension formatter failed: ${message}`);
       return { success: false, error: message };
+    } finally {
+      // Best-effort cleanup — file is in OS temp dir so it will be collected
+      // eventually even if deletion fails (e.g. VS Code still holds a handle).
+      try {
+        fs.unlinkSync(tmpPath);
+      } catch {
+        /* ignore */
+      }
     }
   }
 }

@@ -19,8 +19,10 @@ let shellCheckBinaryAvailable: boolean | null = null;
 /**
  * Resolve the shellcheck executable path: user config first, then the binary
  * bundled inside the timonwong.shellcheck extension, or undefined if not found.
+ * Exported so cliDiagnostics can call shellcheck directly without going through
+ * the extension's internal operations (which have their own 5-second timeout).
  */
-function getShellCheckBinaryPath(): string | undefined {
+export function getShellCheckBinaryPath(): string | undefined {
   const ext = vscode.extensions.getExtension(SHELLCHECK_EXTENSION_ID);
   if (!ext) return undefined;
 
@@ -52,7 +54,7 @@ async function probeShellCheckBinary(): Promise<boolean> {
     return false;
   }
   try {
-    const result = await runCli(binaryPath, ['--version'], undefined, 2_000);
+    const result = await runCli(binaryPath, ['--version'], undefined, 8_000);
     shellCheckBinaryAvailable = result.exitCode === 0;
   } catch {
     shellCheckBinaryAvailable = false;

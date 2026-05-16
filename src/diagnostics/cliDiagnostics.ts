@@ -13,6 +13,7 @@ import * as parse5 from 'parse5';
 import {
   isShellCheckExtensionAvailable,
   diagnoseShellBlockWithExtension,
+  getShellCheckBinaryPath,
 } from './shellCheckExtensionDiagnostics';
 import { diagnoseJsBlock } from './eslintExtensionDiagnostics';
 import { diagnosePythonBlockWithRuffWasm } from './ruffWasmDiagnostics';
@@ -187,17 +188,17 @@ interface ShellCheckItem {
 }
 
 async function runShellCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
-  // 1. Prefer the ShellCheck VS Code extension (no system install required).
-  if (await isShellCheckExtensionAvailable()) {
-    return diagnoseShellBlockWithExtension(block);
-  }
+  // 1. Try the shellcheck binary directly (bundled in timonwong.shellcheck or
+  //    system PATH). This bypasses the extension's own activation/version-check
+  //    which has a hard 5 s timeout and can show "[undefined] timed out" errors.
+  const bundledPath = getShellCheckBinaryPath();
+  const shellcheckBin =
+    bundledPath ?? ((await isToolAvailable('shellcheck')) ? 'shellcheck' : null);
 
-  // 2. Fall back to the shellcheck CLI for rich diagnostics.
-  if (await isToolAvailable('shellcheck')) {
+  if (shellcheckBin) {
     const tmpFile = writeTempFile(block.content, '.sh');
     try {
-      // shellcheck exits non-zero when issues are found — that is expected
-      const result = await runCli('shellcheck', ['--format=json', tmpFile]);
+      const result = await runCli(shellcheckBin, ['--format=json', tmpFile]);
       return parseShellCheckJson(result.stdout);
     } catch (err) {
       Logger.warn(`shellcheck failed: ${String(err)}`);
@@ -206,7 +207,13 @@ async function runShellCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
       deleteTempFile(tmpFile);
     }
   }
-  // Fallback: use prettier-plugin-sh to catch hard syntax errors.
+
+  // 2. Extension-based fallback (no system or bundled binary found).
+  if (await isShellCheckExtensionAvailable()) {
+    return diagnoseShellBlockWithExtension(block);
+  }
+
+  // 3. Last resort: prettier-plugin-sh syntax check.
   return runShellSyntaxCheck(block);
 }
 
@@ -240,25 +247,34 @@ async function runShellSyntaxCheck(block: CodeBlock): Promise<vscode.Diagnostic[
   }
 }
 
+/**
+ * ShellCheck codes suppressed for Markdown code blocks.
+ * SC2148 — "Tips depend on target shell; add a shebang" — blocks won't have shebangs.
+ * SC1017 — "Literal carriage return" — CRLF line endings in Windows Markdown files.
+ */
+const SUPPRESSED_SC_CODES = new Set([2148, 1017]);
+
 function parseShellCheckJson(stdout: string): vscode.Diagnostic[] {
   if (!stdout.trim()) {
     return [];
   }
   try {
     const items: ShellCheckItem[] = JSON.parse(stdout) as ShellCheckItem[];
-    return items.map((item) => {
-      const range = new vscode.Range(
-        Math.max(0, item.line - 1),
-        Math.max(0, item.col - 1),
-        Math.max(0, item.endLine - 1),
-        Math.max(0, item.endCol - 1),
-      );
-      return new vscode.Diagnostic(
-        range,
-        `SC${item.code}: ${item.message}`,
-        shellCheckSeverity(item.level),
-      );
-    });
+    return items
+      .filter((item) => !SUPPRESSED_SC_CODES.has(item.code))
+      .map((item) => {
+        const range = new vscode.Range(
+          Math.max(0, item.line - 1),
+          Math.max(0, item.col - 1),
+          Math.max(0, item.endLine - 1),
+          Math.max(0, item.endCol - 1),
+        );
+        return new vscode.Diagnostic(
+          range,
+          `SC${item.code}: ${item.message}`,
+          shellCheckSeverity(item.level),
+        );
+      });
   } catch {
     return [];
   }

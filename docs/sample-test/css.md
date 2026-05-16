@@ -58,7 +58,7 @@ Press `Shift+Alt+F` to format all blocks with Prettier (bundled — no install r
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -149,8 +149,8 @@ $breakpoints: (
 ## Formatting — SCSS variables and functions
 
 ```scss
-@use 'sass:math';
-@use 'sass:color';
+@use "sass:math";
+@use "sass:color";
 
 $base-font-size: 16px;
 

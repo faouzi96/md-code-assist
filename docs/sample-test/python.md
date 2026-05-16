@@ -9,7 +9,14 @@ Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 
 ```python
 def   greet(name,greeting='Hello'):
-    return   greeting+', '+name+'!'
+          return   greeting+',  '+name+'!'
+
+
+
+
+
+
+
 x=greet('Alice' )
 y=greet('Bob',greeting='Hi')
 print(x,y)

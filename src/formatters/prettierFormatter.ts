@@ -12,24 +12,24 @@ async function getPrettier(): Promise<PrettierModule> {
   return prettierCache;
 }
 
-// prettier-plugin-sh is loaded lazily so its WASM initialises only when needed.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// prettier-plugin-sh: loaded via require() so VS Code's patched module resolver
+// finds it in the extension's node_modules (dynamic import() can fail in the
+// Electron-based extension host due to the ESM→WASM loading chain).
 let pluginShCache: Record<string, unknown> | undefined;
-async function getPluginSh(): Promise<Record<string, unknown>> {
+function getPluginSh(): Record<string, unknown> {
   if (!pluginShCache) {
-    const mod = await import('prettier-plugin-sh');
-    pluginShCache = (mod.default ?? mod) as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    pluginShCache = require('prettier-plugin-sh') as Record<string, unknown>;
   }
   return pluginShCache;
 }
 
-// prettier-plugin-sql is loaded lazily — only when a SQL block needs formatting.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// prettier-plugin-sql: same reason as above.
 let pluginSqlCache: Record<string, unknown> | undefined;
-async function getPluginSql(): Promise<Record<string, unknown>> {
+function getPluginSql(): Record<string, unknown> {
   if (!pluginSqlCache) {
-    const mod = await import('prettier-plugin-sql');
-    pluginSqlCache = (mod.default ?? mod) as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    pluginSqlCache = require('prettier-plugin-sql') as Record<string, unknown>;
   }
   return pluginSqlCache;
 }
@@ -72,12 +72,27 @@ export class PrettierFormatter implements IFormatter {
     }
     try {
       const prettier = await getPrettier();
+      // For CSS-family languages, use the more specific Prettier parser when the raw
+      // fence label indicates SCSS or Less — the generic CSS parser rejects their syntax
+      // (e.g. $variables, @mixin, nesting operators).
+      const effectiveParser =
+        parser === 'css' && options.rawLanguage === 'scss'
+          ? 'scss'
+          : parser === 'css' && options.rawLanguage === 'less'
+            ? 'less'
+            : parser;
       // Shell formatting requires the prettier-plugin-sh plugin.
       // variant: 0=LangBash, 1=LangPOSIX (default per sh-syntax enum)
-      const plugins = parser === 'sh' ? [await getPluginSh()] : parser === 'sql' ? [await getPluginSql()] : [];
-      const variant = parser === 'sh' && options.rawLanguage === 'bash' ? { variant: 0 } : {};
+      const plugins =
+        effectiveParser === 'sh'
+          ? [getPluginSh()]
+          : effectiveParser === 'sql'
+            ? [getPluginSql()]
+            : [];
+      const variant =
+        effectiveParser === 'sh' && options.rawLanguage === 'bash' ? { variant: 0 } : {};
       const formatted = await prettier.format(code, {
-        parser,
+        parser: effectiveParser,
         endOfLine: 'lf',
         plugins,
         ...variant,

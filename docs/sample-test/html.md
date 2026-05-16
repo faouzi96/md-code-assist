@@ -39,8 +39,11 @@ Press `Shift+Alt+F` to format all blocks with Prettier (bundled — no install r
     </ul>
   </div>
   <div class="card__footer">
-    <button class="btn btn--primary" type="button" data-action="confirm">Confirm</button
-    ><button class="btn btn--secondary" type="button" data-action="cancel">Cancel</button>
+    <button class="btn btn--primary" type="button" data-action="confirm">
+      Confirm</button
+    ><button class="btn btn--secondary" type="button" data-action="cancel">
+      Cancel
+    </button>
   </div>
 </div>
 ```
@@ -71,14 +74,21 @@ Press `Shift+Alt+F` to format all blocks with Prettier (bundled — no install r
       minlength="8"
       required
       autocomplete="current-password"
-    /><button class="btn-toggle-password" type="button" aria-label="Show password">👁</button>
+    /><button
+      class="btn-toggle-password"
+      type="button"
+      aria-label="Show password"
+    >
+      👁
+    </button>
   </div>
   <div class="form-check">
-    <input class="form-check-input" type="checkbox" id="remember" name="remember" /><label
-      class="form-check-label"
-      for="remember"
-      >Remember me</label
-    >
+    <input
+      class="form-check-input"
+      type="checkbox"
+      id="remember"
+      name="remember"
+    /><label class="form-check-label" for="remember">Remember me</label>
   </div>
   <button class="btn btn--primary btn--full" type="submit">Sign in</button>
 </form>

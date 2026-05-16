@@ -1,5 +1,8 @@
+import * as fs from 'fs';
 import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
+import { runCli } from '../utils/cliRunner';
 import { Logger } from '../utils/logger';
 import type { CodeBlock } from '../parser/types';
 
@@ -8,15 +11,74 @@ const DIAG_TIMEOUT_MS = 8_000;
 const DEBOUNCE_MS = 400;
 
 /**
+ * Cached result of the upfront binary probe (null = not yet checked).
+ * Avoids repeated 5-second timeouts on each block when the binary is blocked.
+ */
+let shellCheckBinaryAvailable: boolean | null = null;
+
+/**
+ * Resolve the shellcheck executable path: user config first, then the binary
+ * bundled inside the timonwong.shellcheck extension, or undefined if not found.
+ */
+function getShellCheckBinaryPath(): string | undefined {
+  const ext = vscode.extensions.getExtension(SHELLCHECK_EXTENSION_ID);
+  if (!ext) return undefined;
+
+  const configured = vscode.workspace.getConfiguration('shellcheck').get<string>('executablePath');
+  if (configured && configured.trim()) {
+    return configured.trim();
+  }
+
+  // Bundled binary structure: binaries/{platform}/{arch}/shellcheck[.exe]
+  const platform =
+    process.platform === 'win32' ? 'win32' : process.platform === 'darwin' ? 'darwin' : 'linux';
+  const binaryName = process.platform === 'win32' ? 'shellcheck.exe' : 'shellcheck';
+  const bundled = path.join(ext.extensionPath, 'binaries', platform, process.arch, binaryName);
+  return fs.existsSync(bundled) ? bundled : undefined;
+}
+
+/**
+ * Returns true if the shellcheck binary responds within 2 seconds.
+ * Result is cached for the lifetime of the extension host process so only
+ * one probe per session is performed.
+ */
+async function probeShellCheckBinary(): Promise<boolean> {
+  if (shellCheckBinaryAvailable !== null) {
+    return shellCheckBinaryAvailable;
+  }
+  const binaryPath = getShellCheckBinaryPath();
+  if (!binaryPath) {
+    shellCheckBinaryAvailable = false;
+    return false;
+  }
+  try {
+    const result = await runCli(binaryPath, ['--version'], undefined, 2_000);
+    shellCheckBinaryAvailable = result.exitCode === 0;
+  } catch {
+    shellCheckBinaryAvailable = false;
+    Logger.warn(
+      'shellcheck binary did not respond within 2 s (possible antivirus block). ' +
+        'Shell diagnostics via the timonwong.shellcheck extension are disabled for this session.',
+    );
+  }
+  return shellCheckBinaryAvailable;
+}
+
+/**
  * SC2148: "Tips depend on target shell and target shell is unknown — add a shebang."
  * Code snippets in Markdown won't have a shebang, so suppress this false positive.
  */
 const SUPPRESSED_CODES = new Set(['2148']);
 
-export function isShellCheckExtensionAvailable(): boolean {
-  // Check installed only — ShellCheck activates lazily so isActive is false
-  // until a .sh file is opened; we activate it explicitly before use.
-  return vscode.extensions.getExtension(SHELLCHECK_EXTENSION_ID) !== undefined;
+/**
+ * Returns true if the timonwong.shellcheck extension is installed AND its
+ * shellcheck binary actually responds (checked once per session, then cached).
+ */
+export async function isShellCheckExtensionAvailable(): Promise<boolean> {
+  if (!vscode.extensions.getExtension(SHELLCHECK_EXTENSION_ID)) {
+    return false;
+  }
+  return probeShellCheckBinary();
 }
 
 /**

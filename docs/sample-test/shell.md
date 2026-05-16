@@ -10,7 +10,7 @@ Check **View → Output → Markdown Code Assistant** if blocks are skipped.
 ```sh
 #!/bin/sh
 NAME=$1
-if [ -z "$NAMsE" ]; then
+if [ -z "$xxsaE" ]; then
   echo "Usage: $0 <name>"
   exit 1
 
@@ -22,11 +22,12 @@ echo "Hello, $NAME"
 
 ```bash
 #!/usr/bin/env bash
-set -euo pipefail
+set asd
 
 log() {
   local level=$1
-  shift
+
+  sht
   echo "[$level] $(date -u +%Y-%m-%dT%H:%M:%SZ) $*" >&2
 }
 

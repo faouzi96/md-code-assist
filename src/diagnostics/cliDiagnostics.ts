@@ -8,6 +8,7 @@ import { Logger } from '../utils/logger';
 import type { CodeBlock } from '../parser/types';
 import * as jsYaml from 'js-yaml';
 import postcss from 'postcss';
+
 import * as parse5 from 'parse5';
 import {
   isShellCheckExtensionAvailable,
@@ -187,7 +188,7 @@ interface ShellCheckItem {
 
 async function runShellCheck(block: CodeBlock): Promise<vscode.Diagnostic[]> {
   // 1. Prefer the ShellCheck VS Code extension (no system install required).
-  if (isShellCheckExtensionAvailable()) {
+  if (await isShellCheckExtensionAvailable()) {
     return diagnoseShellBlockWithExtension(block);
   }
 

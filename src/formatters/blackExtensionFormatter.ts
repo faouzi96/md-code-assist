@@ -12,37 +12,33 @@ export class BlackExtensionFormatter implements IFormatter {
   readonly supportedLanguages: readonly string[] = ['python'];
 
   isAvailable(): Promise<boolean> {
+    // Check installed only — Black activates lazily when a Python file is opened,
+    // so isActive is false when diagnosing from a Markdown context.
+    // We activate it on demand inside format() before calling the format provider.
     const ext = vscode.extensions.getExtension(BLACK_EXTENSION_ID);
-    return Promise.resolve(ext !== undefined && ext.isActive);
+    return Promise.resolve(ext !== undefined);
   }
 
   async format(code: string, _options: FormatOptions): Promise<FormatResult> {
     try {
-      // Write the code into a virtual in-memory document so VS Code's formatting
-      // pipeline (hooked by the Black Formatter extension) can process it.
-      const uri = vscode.Uri.parse(`untitled:__mdca_black_tmp__.py`);
-      const doc = await vscode.workspace.openTextDocument(uri);
-      const editor = await vscode.window.showTextDocument(doc, {
-        preserveFocus: true,
-        preview: true,
-        viewColumn: vscode.ViewColumn.Beside,
-      });
+      // Activate the extension if it is installed but not yet active.
+      // Black registers its DocumentFormattingEditProvider only after activation.
+      const ext = vscode.extensions.getExtension(BLACK_EXTENSION_ID);
+      if (ext && !ext.isActive) {
+        await ext.activate();
+      }
 
-      // Replace entire document content with the block code.
-      await editor.edit((eb) => {
-        const fullRange = new vscode.Range(doc.positionAt(0), doc.positionAt(doc.getText().length));
-        eb.replace(fullRange, code);
-      });
+      // Open an in-memory Python document with the block content.
+      // Using openTextDocument with content+language avoids opening a visible editor
+      // tab that would flash open and then close on every format-on-save trigger.
+      const doc = await vscode.workspace.openTextDocument({ content: code, language: 'python' });
 
       // Ask VS Code to run the document formatter (Black extension hooks here).
       const edits = await vscode.commands.executeCommand<vscode.TextEdit[]>(
         'vscode.executeFormatDocumentProvider',
-        uri,
+        doc.uri,
         { insertSpaces: true, tabSize: 4 },
       );
-
-      // Close the temporary document without saving.
-      await closeTempDocByUri(uri);
 
       if (!edits || edits.length === 0) {
         // No edits means already formatted or Black returned nothing — treat as success.
@@ -57,18 +53,6 @@ export class BlackExtensionFormatter implements IFormatter {
       const message = err instanceof Error ? err.message : String(err);
       Logger.warn(`Black extension formatter failed: ${message}`);
       return { success: false, error: message };
-    }
-  }
-}
-
-/** Close a specific temp document by URI without disturbing the active editor. */
-async function closeTempDocByUri(uri: vscode.Uri): Promise<void> {
-  for (const group of vscode.window.tabGroups.all) {
-    for (const tab of group.tabs) {
-      if (tab.input instanceof vscode.TabInputText && tab.input.uri.toString() === uri.toString()) {
-        await vscode.window.tabGroups.close(tab, true);
-        return;
-      }
     }
   }
 }

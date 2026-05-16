@@ -86,12 +86,12 @@ Press `Shift+Alt+F` to format all blocks with Prettier (bundled — no install r
     "python",
     "json" /* and jsonc */,
     "yaml",
-    "shell",
+    "shell"
   ],
 
   // Diagnostics
   "mdCodeAssist.diagnostics.enabledLanguages": ["javascript", "typescript"],
-  "mdCodeAssist.diagnostics.severityLevel": "warning", // "error" | "warning" | "info" | "hint"
+  "mdCodeAssist.diagnostics.severityLevel": "warning" // "error" | "warning" | "info" | "hint"
 }
 ```
 

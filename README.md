@@ -12,7 +12,7 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 - **Inline diagnostics** — runs syntax and lint checks on code blocks and maps errors back to their exact lines in the Markdown file (Problems panel + gutter icons + inline text).
 - **Status bar item** — a `✓ Markdown Code Assist` indicator in the status bar shows when a Markdown file is active, transitions to `⚠ N issues` when diagnostics find problems, and briefly shows `✓ Formatted N blocks` after a format operation.
 - **Ignore directive** — add `@md-assistant-ignore` to any fence's info string to exclude that block from formatting and diagnostics entirely (e.g. ` ```js @md-assistant-ignore `).
-- **Zero-install shell support** — shell/bash formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
+- **Zero-install shell support** — shell (`sh`) formatting delegates to the [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt) extension (auto-installed); ShellCheck diagnostics delegate to [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck) (auto-installed). No system tools required.
 - **Zero-install Python formatting** — delegates to the [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) extension (auto-installed). Python itself is not required for formatting.
 - **Deep Python diagnostics** — Ruff runs fully in-process via `@astral-sh/ruff-wasm-nodejs` (bundled, no install required). Catches undefined names, unreachable code, style issues, and more. Falls back to `pyflakes` CLI, then `py_compile` if WASM fails.
 - **SQL formatting + diagnostics** — `prettier-plugin-sql` is bundled; SQL blocks are formatted in-process and parse errors are surfaced as diagnostics. No external tools required.
@@ -29,8 +29,8 @@ Markdown Code Assistant treats the code examples inside your `.md` files as firs
 | VS Code ≥ 1.85                                                                                             |                                                                                                             |
 | Python runtime                                                                                             | Only for Python block **diagnostics** fallback (`pyflakes` / `py_compile`) — not needed when Ruff WASM runs |
 | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Python **formatting** — auto-installed on activation. Python itself is **not** required.                    |
-| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Shell/Bash **formatting** — auto-installed on activation. No system `shfmt` needed.                         |
-| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Shell/Bash **diagnostics** — auto-installed on activation. No system `shellcheck` needed.                   |
+| [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Shell (`sh`) **formatting** — auto-installed on activation. No system `shfmt` needed.                       |
+| [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Shell (`sh`) **diagnostics** — auto-installed on activation. No system `shellcheck` needed.                  |
 
 **Prettier, prettier-plugin-sh, prettier-plugin-sql, js-yaml, postcss, parse5, ESLint, the TypeScript compiler, and `@astral-sh/ruff-wasm-nodejs` are all bundled — no installation required.**
 
@@ -84,8 +84,8 @@ Open a Markdown file, then use the Command Palette (`Ctrl+Shift+P`):
 | Language           | Extension                                                                                                  | Purpose     |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- | ----------- |
 | Python             | [ms-python.black-formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter) | Formatting  |
-| Shell / Bash / Zsh | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Formatting  |
-| Shell / Bash       | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Diagnostics |
+| Shell (`sh`)       | [mkhl.shfmt](https://marketplace.visualstudio.com/items?itemName=mkhl.shfmt)                               | Formatting  |
+| Shell (`sh`)       | [timonwong.shellcheck](https://marketplace.visualstudio.com/items?itemName=timonwong.shellcheck)           | Diagnostics |
 
 ### CLI fallbacks (optional)
 
@@ -95,8 +95,8 @@ If the VS Code extensions above are unavailable, the extension falls back to the
 | ------------------ | ---------- | ----------------------------- | ------------------------- |
 | Python             | pyflakes   | Diagnostics (undefined names) | `pip install pyflakes`    |
 | Python             | Black      | Formatting                    | `pip install black`       |
-| Shell / Bash / Zsh | shfmt      | Formatting                    | `brew install shfmt`      |
-| Shell / Bash       | shellcheck | Diagnostics                   | `brew install shellcheck` |
+| Shell (`sh`)       | shfmt      | Formatting                    | `brew install shfmt`      |
+| Shell (`sh`)       | shellcheck | Diagnostics                   | `brew install shellcheck` |
 
 ---
 
@@ -131,7 +131,7 @@ Example — format and diagnose on save:
 {
   // Format and diagnose every time the file is saved
   "mdCodeAssist.format.triggerMode": "onSave",
-  "mdCodeAssist.diagnostics.triggerMode": "onSave",
+  "mdCodeAssist.diagnostics.triggerMode": "onSave"
 }
 ```
 
@@ -140,7 +140,7 @@ Example — watch mode (format and diagnose as you type):
 ```jsonc
 {
   "mdCodeAssist.format.triggerMode": "onType",
-  "mdCodeAssist.diagnostics.triggerMode": "onType",
+  "mdCodeAssist.diagnostics.triggerMode": "onType"
 }
 ```
 
@@ -158,7 +158,7 @@ Example — full custom setup:
     "css",
     "shell",
     "graphql",
-    "sql",
+    "sql"
   ],
   "mdCodeAssist.diagnostics.enabledLanguages": [
     "javascript",
@@ -169,10 +169,10 @@ Example — full custom setup:
     "html",
     "shell",
     "python",
-    "sql",
+    "sql"
   ],
   "mdCodeAssist.format.triggerMode": "onSave",
-  "mdCodeAssist.diagnostics.triggerMode": "onSave",
+  "mdCodeAssist.diagnostics.triggerMode": "onSave"
 }
 ```
 
